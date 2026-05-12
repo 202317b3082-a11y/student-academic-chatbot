@@ -1,0 +1,31 @@
+# Web Framework & API
+Flask
+flask-cors
+
+# Authentication & Security
+PyJWT
+werkzeug
+
+# LLM & NLP Libraries
+langchain
+
+langchain-huggingface
+
+# Vector Database & Embeddings
+
+
+
+
+# Data Processing
+pandas
+numpy
+
+# Machine Learning & Utilities
+scikit-learn
+requests
+
+langchain-community==0.4.1
+langchain-text-splitters==1.1.2
+faiss-cpu==1.13.2
+sentence-transformers==5.4.1
+torch==2.11.0
