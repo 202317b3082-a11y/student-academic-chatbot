@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #f4f6f9;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #1e293b;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.topbar-brand {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-details {
+  text-align: right;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #b91c1c;
+}
+
+/* NAV */
+nav {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  background: #111827;
+}
+
+nav button {
+  padding: 10px 16px;
+  border: none;
+  background: #1f2937;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+nav button.active {
+  background: #2563eb;
+}
+
+/* CONTAINER */
+.container {
+  padding: 20px;
+}
+
+.panel {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* METRICS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: #111827;
+  color: #fff;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.card h4 {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.card p {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+/* PROGRESS */
+.progress {
+  height: 10px;
+  background: #374151;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#22c55e,#06b6d4);
+  transition: width 0.5s ease;
+}
+
+/* TABLE */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+/* INPUT */
+.input, textarea, select {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* BUTTON */
+.btn {
+  padding: 8px 12px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: #dc2626;
+}
+
+/* KB */
+.kb-item {
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  background: #fff;
+  transition: all 0.3s ease;
+}
+
+.kb-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* SCROLL */
+#feedbackReport {
+  max-height: 400px;
+  overflow-y: auto;
+}
+</style>
+</head>
+
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-brand">Admin Dashboard</div>
+  </div>
+  <div class="user-info">
+    <div class="user-details">
+      <div class="user-name" id="adminName">Admin</div>
+      <div class="user-email" id="adminEmail">admin@example.com</div>
+    </div>
+    <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
+
+<nav>
+  <button id="tabAnalytics">Analytics</button>
+  <button id="tabUsers">Users</button>
+  <button id="tabKB">Knowledge Base</button>
+  <button id="tabFeedback">Feedback</button>
+</nav>
+
+<div class="container">
+
+<!-- ANALYTICS -->
+<div id="analytics" class="panel hidden">
+  <h2>Analytics</h2>
+
+  <div class="metrics-grid">
+    <div class="card"><h4>Total</h4><p id="totalFeedback">0</p></div>
+    <div class="card"><h4>Helpful</h4><p id="helpfulCount">0</p></div>
+    <div class="card"><h4>Not Helpful</h4><p id="notHelpfulCount">0</p></div>
+
+    <div class="card">
+      <h4>Accuracy</h4>
+      <p id="metricAccuracy">0%</p>
+      <div class="progress"><i id="barAccuracy"></i></div>
+    </div>
+
+    <div class="card">
+      <h4>Precision</h4>
+      <p id="metricPrecision">0%</p>
+      <div class="progress"><i id="barPrecision"></i></div>
+    </div>
+
+    <div class="card">
+      <h4>Recall</h4>
+      <p id="metricRecall">0%</p>
+      <div class="progress"><i id="barRecall"></i></div>
+    </div>
+
+    <div class="card">
+      <h4>F1 Score</h4>
+      <p id="metricF1">0%</p>
+      <div class="progress"><i id="barF1"></i></div>
+    </div>
+  </div>
+
+  <h3>Feedback Progress</h3>
+
+  <!-- ✅ TABLE -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Query</th>
+        <th>Feedback</th>
+        <th>Confidence</th>
+      </tr>
+    </thead>
+    <tbody id="feedbackList"></tbody>
+  </table>
+</div>
+
+<!-- USERS -->
+<div id="users" class="panel hidden">
+  <h2>Users</h2>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Action</th></tr></thead>
+    <tbody id="userTable"></tbody>
+  </table>
+</div>
+
+<!-- KB -->
+<div id="kb" class="panel hidden">
+  <h2>College Policies & Knowledge Base</h2>
+  
+  <div style="margin-bottom: 20px; padding: 15px; background: #ffeaa7; border-radius: 8px; border-left: 4px solid #fdcb6e;">
+    <h3 style="margin-top: 0; color: #d63031;">✨ New KB Section</h3>
+    <p style="color: #2d3436; margin-bottom: 0;">This is the new Knowledge Base section where you can manage college policies. Start by adding new policies or searching existing ones below.</p>
+  </div>
+<div style="padding: 15px; background: #d4edff; border-radius: 8px; border-left: 4px solid #0080c0;">
+    <h3 style="margin-top: 0; color: #0080c0;">📚 Add New Policy to Knowledge Base</h3>
+    <p style="color: #444; margin-bottom: 15px;">Enter your policy details directly as a paragraph below:</p>
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #0080c0;">Policy Details:</label>
+      <textarea id="kbNewText" style="padding: 10px; width: 100%; min-height: 150px; border: 2px solid #0080c0; border-radius: 6px; font-family: Arial, sans-serif;" placeholder="Enter the policy details as a paragraph..."></textarea>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <select id="kbNewLang" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff;">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+      </select>
+      <button class="btn" onclick="addKB()" style="width: 100%; background: #0080c0;">Add Policy</button>
+    </div>
+  </div>
+  <div style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+    <h3 style="margin-top: 0;">Search Policies</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+      <input id="kbSearch" class="input" placeholder="Search by keyword..." style="margin-bottom: 0;">
+      <select id="kbLang" style="margin-bottom: 0;">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+      </select>
+      <button class="btn" onclick="searchKB()" style="width: 100%; margin-bottom: 0;">Search</button>
+    </div>
+  </div>
+
+  <div id="kbResults" style="margin-bottom: 30px;"></div>
+
+  <hr style="margin: 30px 0; border: none; border-top: 2px solid #ddd;">
+
+  
+</div>
+
+<!-- FEEDBACK -->
+<div id="feedback" class="panel hidden">
+  <h2>Feedback</h2>
+  <div id="feedbackReport"></div>
+</div>
+
+</div>
+
+<script>
+
+/* LOAD ADMIN INFO */
+async function loadAdminInfo() {
+  try {
+    const res = await fetch('/me');
+    if (!res.ok) throw new Error('Not authenticated');
+    const data = await res.json();
+    document.getElementById('adminName').textContent = data.name || 'Admin';
+    document.getElementById('adminEmail').textContent = data.email || 'admin@example.com';
+  } catch (error) {
+    console.error('Error loading admin info:', error);
+  }
+}
+
+/* LOGOUT */
+async function logoutAdmin() {
+  try {
+    const res = await fetch('/logout', { method: 'POST', credentials: 'include' });
+    if (res.ok) {
+      window.location.href = '/login';
+    } else {
+      alert('Logout failed');
+    }
+  } catch (error) {
+    console.error('Error logging out:', error);
+    alert('Error logging out');
+  }
+}
+
+/* INITIAL LOAD */
+document.addEventListener('DOMContentLoaded', () => {
+  loadAdminInfo();
+  loadAnalytics();
+});
+const tabs = {
+  tabAnalytics: 'analytics',
+  tabUsers: 'users',
+  tabKB: 'kb',
+  tabFeedback: 'feedback'
+};
+
+Object.keys(tabs).forEach(id => {
+  document.getElementById(id).onclick = () => showTab(id);
+});
+
+function showTab(id) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById(tabs[id]).classList.remove('hidden');
+
+  if (tabs[id]==='users') loadUsers();
+  if (tabs[id]==='kb') searchKB();
+  if (tabs[id]==='analytics') loadAnalytics();
+  if (tabs[id]==='feedback') loadFeedbackReport();
+}
+
+showTab('tabUsers');
+
+/* USERS */
+async function loadUsers() {
+  try {
+    const res = await fetch('/admin/users');
+    if (!res.ok) throw new Error('Failed to fetch users');
+    const data = await res.json();
+    userTable.innerHTML = '';
+
+    if (!data.users || data.users.length === 0) {
+      userTable.innerHTML = "<tr><td colspan='5'>No users</td></tr>";
+      return;
+    }
+
+    data.users.forEach(u => {
+      userTable.innerHTML += `
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.mobile}</td>
+          <td>
+            <select onchange="updateRole('${u.email}',this.value)">
+              <option value="student" ${u.role === 'student' ? 'selected' : ''}>Student</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+            </select>
+          </td>
+          <td><button class="btn btn-danger" onclick="deleteUser('${u.email}')">Delete</button></td>
+        </tr>`;
+    });
+  } catch (error) {
+    console.error('Error loading users:', error);
+    userTable.innerHTML = "<tr><td colspan='5'>Error loading users</td></tr>";
+  }
+}
+
+async function updateRole(email, role) {
+  try {
+    await fetch('/admin/users/role', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role })
+    });
+    loadUsers();
+  } catch (error) {
+    console.error('Error updating role:', error);
+    alert('Failed to update role');
+  }
+}
+
+async function deleteUser(email) {
+  if (!confirm("Delete?")) return;
+  try {
+    await fetch('/admin/users/delete', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    loadUsers();
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Failed to delete user');
+  }
+}
+
+/* KB */
+async function searchKB() {
+  try {
+    const q = kbSearch.value || '';
+    const lang = kbLang.value || 'en';
+    const res = await fetch(`/admin/kb?q=${encodeURIComponent(q)}&lang=${lang}`);
+    if (!res.ok) throw new Error('Failed to fetch KB');
+    const data = await res.json();
+    kbResults.innerHTML = '';
+
+    if (!data.items || data.items.length === 0) {
+      kbResults.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No policies found matching your search</p>';
+      return;
+    }
+
+    kbResults.innerHTML = `<p style="color: #2563eb; font-weight: bold; margin-bottom: 15px;">Found ${data.items.length} result(s)</p>`;
+
+    data.items.forEach(it => {
+      const shortText = (it.text || '').substring(0, 150) + (it.text.length > 150 ? '...' : '');
+      kbResults.innerHTML += `
+        <div class="kb-item" style="border-left: 4px solid #2563eb; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+            <h4 style="margin: 0 0 10px 0; color: #111827;">Policy #${it.id + 1}</h4>
+            <span style="background: #e0e7ff; color: #2563eb; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${lang === 'en' ? 'English' : 'Hindi'}</span>
+          </div>
+          <div style="background: #f9fafb; padding: 10px; border-radius: 4px; margin-bottom: 10px; max-height: 200px; overflow-y: auto;">
+            <p style="margin: 0; font-size: 14px; color: #4b5563; white-space: pre-wrap;">${it.text}</p>
+          </div>
+          <textarea id="kb_${it.id}" style="display: none; width: 100%; min-height: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">${it.text}</textarea>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="editKBMode(${it.id})" style="flex: 1;">Edit</button>
+            <button class="btn btn-danger" onclick="deleteKB(${it.id})" style="flex: 1;">Delete</button>
+          </div>
+          <div id="edit_${it.id}" style="display: none; margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px;">
+            <textarea id="edit_text_${it.id}" style="width: 100%; min-height: 120px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">${it.text}</textarea>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn" onclick="saveKBEdit(${it.id})" style="flex: 1;">Save Changes</button>
+              <button class="btn btn-danger" onclick="cancelKBEdit(${it.id})" style="flex: 1;">Cancel</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  } catch (error) {
+    console.error('Error searching KB:', error);
+    kbResults.innerHTML = '<p style="color: #dc2626; padding: 20px; text-align: center;">Error loading policies</p>';
+  }
+}
+
+function editKBMode(id) {
+  const editDiv = document.getElementById(`edit_${id}`);
+  editDiv.style.display = editDiv.style.display === 'none' ? 'block' : 'none';
+}
+
+function cancelKBEdit(id) {
+  document.getElementById(`edit_${id}`).style.display = 'none';
+}
+
+async function saveKBEdit(id) {
+  try {
+    const newText = document.getElementById(`edit_text_${id}`).value.trim();
+    const lang = kbLang.value || 'en';
+    if (!newText) {
+      alert('Please enter policy text');
+      return;
+    }
+    const res = await fetch(`/admin/kb/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: newText, lang })
+    });
+    if (!res.ok) throw new Error('Failed to update policy');
+    alert('Policy updated successfully!');
+    searchKB();
+  } catch (error) {
+    console.error('Error updating KB:', error);
+    alert('Failed to update policy: ' + error.message);
+  }
+}
+
+async function addKB() {
+  try {
+    const text = (kbNewText.value || '').trim();
+    const lang = kbNewLang.value || 'en';
+    
+    if (!text) {
+      alert('Please enter policy details');
+      return;
+    }
+    
+    // Format as "Policy: ..."
+    const formattedText = `Policy: ${text}`;
+    
+    const res = await fetch('/admin/kb', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: formattedText, lang })
+    });
+    if (!res.ok) throw new Error('Failed to add policy');
+    
+    alert('Policy added successfully!');
+    kbNewText.value = '';
+    searchKB();
+  } catch (error) {
+    console.error('Error adding KB:', error);
+    alert('Failed to add policy: ' + error.message);
+  }
+}
+
+async function deleteKB(id) {
+  if (!confirm("Are you sure you want to delete this policy? This action cannot be undone.")) return;
+  try {
+    const lang = kbLang.value || 'en';
+    const res = await fetch(`/admin/kb/${id}?lang=${lang}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete policy');
+    alert('Policy deleted successfully!');
+    searchKB();
+  } catch (error) {
+    console.error('Error deleting KB:', error);
+    alert('Failed to delete policy: ' + error.message);
+  }
+}
+
+/* FEEDBACK */
+async function loadFeedbackReport() {
+  try {
+    const res = await fetch('/admin/feedback');
+    if (!res.ok) throw new Error('Failed to fetch feedback');
+    const data = await res.json();
+    feedbackReport.innerHTML = '';
+
+    if (!data.items || data.items.length === 0) {
+      feedbackReport.innerHTML = '<p>No feedback available</p>';
+      return;
+    }
+
+    data.items.forEach(it => {
+      feedbackReport.innerHTML += `
+        <div>
+          <strong>${it.user_query || 'N/A'}</strong><br>
+          <small><em>${it.chatbot_response || 'N/A'}</em></small><br>
+          <strong>Feedback:</strong> ${it.feedback || 'N/A'}<br>
+          <small>User: ${it.user_email || 'N/A'} | Confidence: ${it.confidence_score || '0'}%</small>
+          <hr>
+        </div>`;
+    });
+  } catch (error) {
+    console.error('Error loading feedback:', error);
+    feedbackReport.innerHTML = '<p>Error loading feedback</p>';
+  }
+}
+
+/* ANALYTICS */
+function setBar(id,value){
+  const bar=document.getElementById(id);
+  bar.style.width=value+"%";
+}
+
+async function loadAnalytics(){
+  try {
+    const res = await fetch('/admin/feedback');
+    if (!res.ok) throw new Error('Failed to fetch analytics');
+    const data = await res.json();
+
+    totalFeedback.textContent = data.metrics?.total || 0;
+    helpfulCount.textContent = data.metrics?.yes || 0;
+    notHelpfulCount.textContent = data.metrics?.no || 0;
+
+    setBar("barAccuracy", data.metrics?.accuracy || 0);
+    setBar("barPrecision", data.metrics?.precision || 0);
+    setBar("barRecall", data.metrics?.recall || 0);
+    setBar("barF1", data.metrics?.f1 || 0);
+
+    metricAccuracy.textContent = (data.metrics?.accuracy || 0) + "%";
+    metricPrecision.textContent = (data.metrics?.precision || 0) + "%";
+    metricRecall.textContent = (data.metrics?.recall || 0) + "%";
+    metricF1.textContent = (data.metrics?.f1 || 0) + "%";
+
+    feedbackList.innerHTML = '';
+
+    if (!data.items || data.items.length === 0) {
+      feedbackList.innerHTML = "<tr><td colspan='3'>No feedback</td></tr>";
+      return;
+    }
+
+    data.items.forEach(it => {
+      const score = it.confidence_score || 0;
+      feedbackList.innerHTML += `
+        <tr>
+          <td>${it.user_query || ''}</td>
+          <td>${it.feedback || ''}</td>
+          <td>
+            <div class="progress">
+              <i style="width:${score}%"></i>
+            </div>
+            <small>${score}%</small>
+          </td>
+        </tr>`;
+    });
+  } catch (error) {
+    console.error('Error loading analytics:', error);
+    feedbackList.innerHTML = "<tr><td colspan='3'>Error loading data</td></tr>";
+  }
+}
+</script>
+
+</body>
+</html>
