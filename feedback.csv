@@ -1,0 +1,147 @@
+timestamp,user_query,chatbot_response,feedback,user_email,confidence_score
+# Feedback data: user queries, responses, ratings
+# ...existing code...2026-05-12T03:52:16.289854,hi,"
+      <ul>
+        <li>I could not find a good match. Please rephrase your question.</li>
+      </ul>
+    ",yes,prabhatawasthiunnao@gmail.com,30
+2026-05-12T04:25:41.926204,tell me about ec1 and ec2,"
+      <ul>
+        <li>94)	Question: Where can I find my course book detail?
+Answer: Course Handout is available on e-learn portal course page for students after register in their respective course. Course handout Contain the Name of the text/ref. books. You can also check e-library for more books related to your course.
+95)	Question: Who is the point of contact in case of any issue reporting in any of the EC1 Components?
+Answer: For any concerns or issues related to EC-1 Components like Labs, Assignments, Quizzes, and group activities, your course instructor is the designated point of contact. Kindly reach out to them for assistance and share your queries directly. Course assignment, access enablement, course handouts, academic calendars, exam calendars.</li><li>103)	Question: How many Evaluation Components I have to take in a single semester?
+Answer: It is the responsibility of each registered student to take the prescribed components of the evaluation such as Quizzes &amp; Assignments (EC1), Mid-Semester (EC2) Examinations and Comprehensive (EC3) Examinations according to the schedule given in the respective Course Handouts. The students registered in Dissertation or Project Work Semester will not have EC1, EC2 &amp; EC3 components.
+104)	Question: Is it mandatory to attend Mid semester (EC2) exams?
+Answer: For all courses registered in the current semester, the student must mandatorily attend the Mid-Semester (EC2) Examinations as well as the Comprehensive (EC3) Examination.
+105)	Question: What if I am unable to appear for the Regular Exam(s)?</li><li>105)	Question: What if I am unable to appear for the Regular Exam(s)?
+Answer: If a student is unable to appear for any of the Regular Mid-Semester Exams (EC2R) or Regular Comprehensive Examination (EC3R) due to genuine unforeseen or unavoidable personal or professional exigencies, he/she can apply online for the Mid-Semester Make-up / Comprehensive Make-up examinations, soon after the Regular Exams are over.
+106)	Question: I have two exams scheduled on the same data &amp; time. Should I take one of the exams in Make-up slot?</li>
+      </ul>
+    ",no,swastik.@gmail.com,72.19000244140625
+2026-05-12T04:50:13.405965,what if absent,"
+      <ul>
+        <li>152)	Question: Do the Supervisor and Additional Examiner need to attend scheduled meetings?
+Answer: Their attendance is optional during the Abstract and Mid-Semester Viva; however, if they join these sessions, it can greatly help students. Attendance is mandatory during the Final Viva.
+153)	Question: What are the various terminologies used in the T-Course?</li><li>34)	Question: How do I access library e-resources remotely?
+Answer: All subscribed e-resources must be accessed via OpenAthens authentication using your official WILP credentials. Direct access without OpenAthens may not work.
+35)	Question: What happens if my OpenAthens account remains inactive for a long time?
+Answer: Prolonged inactivity may result in temporary deactivation of the account. If your account becomes inactive or access is interrupted, you may contact the Library for reactivation.
+36)	Question: What happens if I do not activate my OpenAthens account within the given time?</li><li>105)	Question: What if I am unable to appear for the Regular Exam(s)?
+Answer: If a student is unable to appear for any of the Regular Mid-Semester Exams (EC2R) or Regular Comprehensive Examination (EC3R) due to genuine unforeseen or unavoidable personal or professional exigencies, he/she can apply online for the Mid-Semester Make-up / Comprehensive Make-up examinations, soon after the Regular Exams are over.
+106)	Question: I have two exams scheduled on the same data &amp; time. Should I take one of the exams in Make-up slot?</li>
+      </ul>
+    ",no,swastik.@gmail.com,68.37999725341797
+2026-05-12T05:05:38.213105,tell me about ec1 and ec2,"
+      <ul>
+        <li>94)	Question: Where can I find my course book detail?
+Answer: Course Handout is available on e-learn portal course page for students after register in their respective course. Course handout Contain the Name of the text/ref. books. You can also check e-library for more books related to your course.
+95)	Question: Who is the point of contact in case of any issue reporting in any of the EC1 Components?
+Answer: For any concerns or issues related to EC-1 Components like Labs, Assignments, Quizzes, and group activities, your course instructor is the designated point of contact. Kindly reach out to them for assistance and share your queries directly. Course assignment, access enablement, course handouts, academic calendars, exam calendars.</li><li>103)	Question: How many Evaluation Components I have to take in a single semester?
+Answer: It is the responsibility of each registered student to take the prescribed components of the evaluation such as Quizzes &amp; Assignments (EC1), Mid-Semester (EC2) Examinations and Comprehensive (EC3) Examinations according to the schedule given in the respective Course Handouts. The students registered in Dissertation or Project Work Semester will not have EC1, EC2 &amp; EC3 components.
+104)	Question: Is it mandatory to attend Mid semester (EC2) exams?
+Answer: For all courses registered in the current semester, the student must mandatorily attend the Mid-Semester (EC2) Examinations as well as the Comprehensive (EC3) Examination.
+105)	Question: What if I am unable to appear for the Regular Exam(s)?</li><li>105)	Question: What if I am unable to appear for the Regular Exam(s)?
+Answer: If a student is unable to appear for any of the Regular Mid-Semester Exams (EC2R) or Regular Comprehensive Examination (EC3R) due to genuine unforeseen or unavoidable personal or professional exigencies, he/she can apply online for the Mid-Semester Make-up / Comprehensive Make-up examinations, soon after the Regular Exams are over.
+106)	Question: I have two exams scheduled on the same data &amp; time. Should I take one of the exams in Make-up slot?</li>
+      </ul>
+    ",yes,swastik.@gmail.com,72.19000244140625
+2026-05-12T05:06:11.563007,How to calculate CG to A?,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>234)	Question: How can I obtain a Letter of Recommendation (LoR)?
+Answer: Graduated Students: For obtaining the LOR (Letter of Recommendation) from the Bits faculty, you may reach out to the faculty who taught the courses of the degree programme. Also, attach the transcript for reference. Continuing Students: For obtaining the LOR (Letter of Recommendation) from the Bits faculty, you may reach out to the faculty who is teaching the courses of the degree programme. Also, attach the semester gradesheets for reference.
+235)	Question: Degree Certificate Dispatch Status / Tracking Details?
+Answer: Please reach out to supportservices@pilani.bits-pilani.ac.in for undelivered of your degree certificate.
+236)	Question: How to calculate CGPA?</li><li>229)	Question: How can I obtain a Medium of Instruction Letter?
+Answer: You can download the Medium of Instruction Letter from the eLearn portal using your BITS email ID and password. • Log in to the eLearn portal • Go to Student Services • Select Certificates to download your Medium of Instruction Letter
+230)	Question: How can I obtain CGPA % Conversion Letter?
+Answer: You can download the CGPA % Conversion Letter from the eLearn portal using your BITS email ID and password. • Log in to the eLearn portal • Go to Student Services Select Certificates to download your CGPA % Conversion Letter
+231)	Question: Why division not awarded in the Higher degree and PGD Programmes?</li>
+      </ul>
+    ",yes,swastik.@gmail.com,74.5
+2026-05-12T05:23:41.035033,hi,"
+      <ul>
+        <li>Answer: Dear BITSian, Greeting from Alumni Relations Division, BITS Pilani. You will be happy to know that BITS Pilani Almaconnect has crossed the registration of 83000 + alumni from across the globe. It&#039;s our endeavor to make our community a most vibrant one; we keep updating/enriching our in-house alumni database using an interactive online platform- BITS Pilani AlmaConnect. RECONNECT now, RELIVE your past, and REIMAGINE your future. To sign up and connect with your classmates, log on to https://bitspilani.almaconnect.com Other features of the platform include: • Discover BITSians by City / Job Role • Post / Like / Share updates • Know about institute &amp; alumni events • Share pictures and videos • And many more… Joining the platform only take few minutes and you have the option of</li><li>Pilani as shown in the screenshot below: 3. Use your mobile number, username, or Aadhaar to access DigiLocker These above details are also available on the institute website at https://www.bits-pilani.ac.in/national-academic-depository-nad-portal/ If you encounter any difficulties, please feel free to reach out to rakesh.shekhawat@pilani.bits-pilani.ac.in or contact us at 01596-255354 during office hours (Monday to Friday, 09:00 AM - 05:00 PM, and Saturday, 09:00 AM - 01:00 PM). Regards,</li><li>256)	Question: How can I join the vibrant BITS Pilani Alumni Community (AlmaConnect)?</li>
+      </ul>
+    ",yes,swastik.@gmail.com,68.54000091552734
+2026-05-12T09:18:58.345365,cgpa,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>77)	Question: What is minimum CGPA required for final semester registration?
+Answer: Please note that for the First degree (B. Tech, B.Sc. and M.Sc.) programmes require a minimum CGPA of 4.50 and a Higher degree (M. Tech and MBA) programmes require a minimum CGPA of 5.50 without any E Grade in any of the courses to register for Final Semester Dissertation / Project / Project Work.
+78)	Question: My previous CGPA is less than required. Can I register for next semester?
+Answer: You will be able to register for the subsequent semesters (except for Dissertation / Project Semester) and you can improve your CGPA in the coming semesters to ensure that you are meeting the minimum academic requirements of your programme.</li><li>123)	Question: RRA grade.
+Answer: Please note that it is mandatory for the students to attend either in Regular or Makeup Exam for all registered courses in the particular semester. Students who miss the Regular or Makeup Exam for any courses during the current semester will be declared RRA (Required to Register Again) Grade for that course and they have to register for the same course during a later semester. It is crucial to note that no further Makeup Exams will be arranged, regardless of the reasons for missing the Regular and Makeup Exams.
+124)	Question: Required CGPA.</li>
+      </ul>
+    ",yes,prabhatawasthiunnao@gmail.com,77.30999755859375
+2026-05-12T09:19:44.861163,hi,"
+      <ul>
+        <li>Answer: Dear BITSian, Greeting from Alumni Relations Division, BITS Pilani. You will be happy to know that BITS Pilani Almaconnect has crossed the registration of 83000 + alumni from across the globe. It&#039;s our endeavor to make our community a most vibrant one; we keep updating/enriching our in-house alumni database using an interactive online platform- BITS Pilani AlmaConnect. RECONNECT now, RELIVE your past, and REIMAGINE your future. To sign up and connect with your classmates, log on to https://bitspilani.almaconnect.com Other features of the platform include: • Discover BITSians by City / Job Role • Post / Like / Share updates • Know about institute &amp; alumni events • Share pictures and videos • And many more… Joining the platform only take few minutes and you have the option of</li><li>Pilani as shown in the screenshot below: 3. Use your mobile number, username, or Aadhaar to access DigiLocker These above details are also available on the institute website at https://www.bits-pilani.ac.in/national-academic-depository-nad-portal/ If you encounter any difficulties, please feel free to reach out to rakesh.shekhawat@pilani.bits-pilani.ac.in or contact us at 01596-255354 during office hours (Monday to Friday, 09:00 AM - 05:00 PM, and Saturday, 09:00 AM - 01:00 PM). Regards,</li><li>256)	Question: How can I join the vibrant BITS Pilani Alumni Community (AlmaConnect)?</li>
+      </ul>
+    ",no,prabhatawasthiunnao@gmail.com,68.54000091552734
+2026-05-12T09:19:46.972144,cgpa,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>77)	Question: What is minimum CGPA required for final semester registration?
+Answer: Please note that for the First degree (B. Tech, B.Sc. and M.Sc.) programmes require a minimum CGPA of 4.50 and a Higher degree (M. Tech and MBA) programmes require a minimum CGPA of 5.50 without any E Grade in any of the courses to register for Final Semester Dissertation / Project / Project Work.
+78)	Question: My previous CGPA is less than required. Can I register for next semester?
+Answer: You will be able to register for the subsequent semesters (except for Dissertation / Project Semester) and you can improve your CGPA in the coming semesters to ensure that you are meeting the minimum academic requirements of your programme.</li><li>123)	Question: RRA grade.
+Answer: Please note that it is mandatory for the students to attend either in Regular or Makeup Exam for all registered courses in the particular semester. Students who miss the Regular or Makeup Exam for any courses during the current semester will be declared RRA (Required to Register Again) Grade for that course and they have to register for the same course during a later semester. It is crucial to note that no further Makeup Exams will be arranged, regardless of the reasons for missing the Regular and Makeup Exams.
+124)	Question: Required CGPA.</li>
+      </ul>
+    ",yes,prabhatawasthiunnao@gmail.com,77.30999755859375
+2026-05-12T09:19:49.131325,cgpa,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>77)	Question: What is minimum CGPA required for final semester registration?
+Answer: Please note that for the First degree (B. Tech, B.Sc. and M.Sc.) programmes require a minimum CGPA of 4.50 and a Higher degree (M. Tech and MBA) programmes require a minimum CGPA of 5.50 without any E Grade in any of the courses to register for Final Semester Dissertation / Project / Project Work.
+78)	Question: My previous CGPA is less than required. Can I register for next semester?
+Answer: You will be able to register for the subsequent semesters (except for Dissertation / Project Semester) and you can improve your CGPA in the coming semesters to ensure that you are meeting the minimum academic requirements of your programme.</li><li>123)	Question: RRA grade.
+Answer: Please note that it is mandatory for the students to attend either in Regular or Makeup Exam for all registered courses in the particular semester. Students who miss the Regular or Makeup Exam for any courses during the current semester will be declared RRA (Required to Register Again) Grade for that course and they have to register for the same course during a later semester. It is crucial to note that no further Makeup Exams will be arranged, regardless of the reasons for missing the Regular and Makeup Exams.
+124)	Question: Required CGPA.</li>
+      </ul>
+    ",no,prabhatawasthiunnao@gmail.com,77.30999755859375
+2026-05-12T09:19:52.045116,cgpa,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>77)	Question: What is minimum CGPA required for final semester registration?
+Answer: Please note that for the First degree (B. Tech, B.Sc. and M.Sc.) programmes require a minimum CGPA of 4.50 and a Higher degree (M. Tech and MBA) programmes require a minimum CGPA of 5.50 without any E Grade in any of the courses to register for Final Semester Dissertation / Project / Project Work.
+78)	Question: My previous CGPA is less than required. Can I register for next semester?
+Answer: You will be able to register for the subsequent semesters (except for Dissertation / Project Semester) and you can improve your CGPA in the coming semesters to ensure that you are meeting the minimum academic requirements of your programme.</li><li>123)	Question: RRA grade.
+Answer: Please note that it is mandatory for the students to attend either in Regular or Makeup Exam for all registered courses in the particular semester. Students who miss the Regular or Makeup Exam for any courses during the current semester will be declared RRA (Required to Register Again) Grade for that course and they have to register for the same course during a later semester. It is crucial to note that no further Makeup Exams will be arranged, regardless of the reasons for missing the Regular and Makeup Exams.
+124)	Question: Required CGPA.</li>
+      </ul>
+    ",yes,prabhatawasthiunnao@gmail.com,77.30999755859375
+2026-05-12T09:19:54.276355,cgpa,Server error.,yes,prabhatawasthiunnao@gmail.com,
+2026-05-12T09:19:55.671857,cgpa,Server error.,yes,prabhatawasthiunnao@gmail.com,
+2026-05-12T09:29:02.060274,cgpa,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>77)	Question: What is minimum CGPA required for final semester registration?
+Answer: Please note that for the First degree (B. Tech, B.Sc. and M.Sc.) programmes require a minimum CGPA of 4.50 and a Higher degree (M. Tech and MBA) programmes require a minimum CGPA of 5.50 without any E Grade in any of the courses to register for Final Semester Dissertation / Project / Project Work.
+78)	Question: My previous CGPA is less than required. Can I register for next semester?
+Answer: You will be able to register for the subsequent semesters (except for Dissertation / Project Semester) and you can improve your CGPA in the coming semesters to ensure that you are meeting the minimum academic requirements of your programme.</li><li>123)	Question: RRA grade.
+Answer: Please note that it is mandatory for the students to attend either in Regular or Makeup Exam for all registered courses in the particular semester. Students who miss the Regular or Makeup Exam for any courses during the current semester will be declared RRA (Required to Register Again) Grade for that course and they have to register for the same course during a later semester. It is crucial to note that no further Makeup Exams will be arranged, regardless of the reasons for missing the Regular and Makeup Exams.
+124)	Question: Required CGPA.</li>
+      </ul>
+    ",yes,swastik.@gmail.com,77.30999755859375
+2026-05-12T09:29:22.269906,cgpa,"
+      <ul>
+        <li>236)	Question: How to calculate CGPA?
+Answer: Dear student, Cumulative Grade Point Average (CGPA): The CGPA (calculated on a 10 point scale) will be used to describe the overall performance of a student (from the semester of admission till the point of reckoning) in all courses for which LETTER GRADES are awarded. U1*G1 + U2*G2 + U3*G3 …….. CGPA = ___________________________ U1 + U2 + U3 ..... Where U1, U2, U3 …… denote UNITS of the course, and G1, G2, G3 denote grade points of the LETTER GRADES awarded in that course. Non-Letter grades do not go into the computation of CGPA.
+237)	Question: How can I access my certificate in DigiLocker?</li><li>77)	Question: What is minimum CGPA required for final semester registration?
+Answer: Please note that for the First degree (B. Tech, B.Sc. and M.Sc.) programmes require a minimum CGPA of 4.50 and a Higher degree (M. Tech and MBA) programmes require a minimum CGPA of 5.50 without any E Grade in any of the courses to register for Final Semester Dissertation / Project / Project Work.
+78)	Question: My previous CGPA is less than required. Can I register for next semester?
+Answer: You will be able to register for the subsequent semesters (except for Dissertation / Project Semester) and you can improve your CGPA in the coming semesters to ensure that you are meeting the minimum academic requirements of your programme.</li><li>123)	Question: RRA grade.
+Answer: Please note that it is mandatory for the students to attend either in Regular or Makeup Exam for all registered courses in the particular semester. Students who miss the Regular or Makeup Exam for any courses during the current semester will be declared RRA (Required to Register Again) Grade for that course and they have to register for the same course during a later semester. It is crucial to note that no further Makeup Exams will be arranged, regardless of the reasons for missing the Regular and Makeup Exams.
+124)	Question: Required CGPA.</li>
+      </ul>
+    ",yes,swastik.@gmail.com,77.30999755859375
