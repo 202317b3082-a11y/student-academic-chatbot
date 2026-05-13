@@ -1,73 +1,43 @@
-import json
-
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-
 FAISS_DIR = "faiss_index"
+CACHE_DIR = "hf_cache"   # local folder for model caching
 
-
+# Initialize embedding model with local cache
 embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    cache_folder=CACHE_DIR
 )
 
-vectorstore = FAISS.load_local(
-    FAISS_DIR,
-    embeddings,
-    allow_dangerous_deserialization=True
-)
+def load_text_file(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
 
+def split_text(text, chunk_size=500, overlap=50):
+    chunks = []
+    start = 0
+    text_length = len(text)
 
-def similarity_to_confidence(score: float) -> float:
-    """
-    Convert FAISS distance score to a confidence score between 0 and 100.
+    while start < text_length:
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start += chunk_size - overlap
 
-    Uses a scaled inverse formula to boost confidence values.
-    Lower score => higher confidence.
-    """
-    confidence = 100 / (1 + score * 0.3)
-    return max(0.0, min(100.0, confidence))
+    return chunks
 
+def create_embeddings_from_file(file_path):
+    text = load_text_file(file_path)
 
-def nlpcall(query: str) -> dict:
-    """
-    Search FAISS index and return response with overall confidence.
+    texts = split_text(text, chunk_size=500, overlap=50)
 
-    Returns:
-        dict: {
-            "response": list of matching document contents,
-            "confidence": overall confidence percentage
-        }
-    """
-    results = vectorstore.similarity_search_with_score(query, k=3)
+    vectorstore = FAISS.from_texts(texts, embeddings)
 
-    confidences = []
-    content_parts = []
+    vectorstore.save_local(FAISS_DIR)
 
-    for doc, score in results:
-        confidence = similarity_to_confidence(score)
-        confidences.append(confidence)
-        content_parts.append(doc.page_content)
-
-    overall_confidence = (
-        sum(confidences) / len(confidences)
-        if confidences
-        else 0.0
-    )
-
-    return {
-        "response": content_parts,
-        "confidence": float(round(overall_confidence, 2))
-    }
-
+    print(f"✅ Embeddings created from '{file_path}'")
+    print(f"✅ FAISS saved to '{FAISS_DIR}'")
+    print(f"✅ Model cached in '{CACHE_DIR}'")
 
 if __name__ == "__main__":
-    while True:
-        question = input("Ask a question (or type 'exit'): ")
-
-        if question.lower() == "exit":
-            break
-
-        result = nlpcall(question)
-
-        print(json.dumps(result, indent=2, ensure_ascii=False))
+    create_embeddings_from_file("college_policy.txt")
