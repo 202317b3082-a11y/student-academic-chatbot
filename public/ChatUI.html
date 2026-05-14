@@ -382,6 +382,34 @@ body {
   outline: none;
 }
 
+.language-select {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: background 150ms ease, border-color 150ms ease;
+  font-weight: 600;
+  min-width: 110px;
+}
+
+.language-select:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.language-select:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+}
+
+.language-select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
 .icon-btn {
   width: 40px;
   height: 40px;
@@ -746,8 +774,18 @@ body {
 
   <div class="input-bar">
     <input id="userInput" placeholder="Type or speak..." />
-    <input type="file" id="fileInput" hidden onchange="uploadFile()" />
-    <div class="icon-btn" onclick="document.getElementById('fileInput').click()">File</div>
+    <select id="languageSelect" class="language-select">
+      <option value="English">English</option>
+      <option value="Hindi">Hindi</option>
+      <option value="Tamil">Tamil</option>
+      <option value="Telugu">Telugu</option>
+      <option value="Kannada">Kannada</option>
+      <option value="Malayalam">Malayalam</option>
+      <option value="Marathi">Marathi</option>
+      <option value="Gujarati">Gujarati</option>
+      <option value="Bengali">Bengali</option>
+      <option value="Punjabi">Punjabi</option>
+    </select>
     <div id="micBtn" class="icon-btn" onclick="startVoice()">Mic</div>
     <div class="icon-btn" onclick="sendMessage()">Send</div>
   </div>
@@ -776,7 +814,6 @@ const chatList = document.getElementById("chatList");
 const topUser = document.getElementById("topUser");
 const topRole = document.getElementById("topRole");
 const topEmail = document.getElementById("topEmail");
-const fileInput = document.getElementById("fileInput");
 const micBtn = document.getElementById("micBtn");
 
 const CHAT_PREFIX = "chat_";
@@ -1079,6 +1116,9 @@ async function sendMessage() {
   showTyping();
 
   try {
+    const languageSelect = document.getElementById("languageSelect");
+    const selectedLanguage = languageSelect.value;
+
     const response = await fetch("/chat", {
       method: "POST",
       headers: {
@@ -1086,7 +1126,8 @@ async function sendMessage() {
       },
       credentials: "same-origin",
       body: JSON.stringify({
-        message: text
+        message: text,
+        language: selectedLanguage
       })
     });
 
@@ -1355,22 +1396,6 @@ function startVoice() {
   } else {
     recognition.stop();
   }
-}
-
-function uploadFile() {
-  const file = document.getElementById("fileInput").files[0];
-
-  if (!file) {
-    return;
-  }
-
-  const fileMessage = "Attached file: " + file.name;
-
-  addMessage(fileMessage, "user");
-  saveMessage(fileMessage, "user");
-
-  userInput.value = "";
-  fileInput.value = "";
 }
 
 async function submitFeedback(
