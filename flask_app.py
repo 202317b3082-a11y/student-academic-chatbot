@@ -3,6 +3,7 @@ from flask import (
     make_response, redirect, url_for
 )
 from logic_response import nlpcall
+from translate import translate_to_english, translate_from_english
 import sqlite3
 import db
 import csv
@@ -208,47 +209,82 @@ def feedback():
 def chat_api():
     data = request.get_json()
     message = data.get("message", "").strip()
+    user_language = data.get("language", "English").strip()
 
     if not message:
         return jsonify({"error": "Message is required"}), 400
 
-    # nlpcall may return dict with response and confidence
     try:
-        nlp_result = nlpcall(message)
-        if isinstance(nlp_result, dict):
-            resp = nlp_result.get("response", [])
-            conf = nlp_result.get("confidence", 0)
+        # Step 1: Translate user message to English if needed
+        if user_language.lower() != "english":
+            translate_response = translate_to_english(message, user_language)
+            if translate_response['success']:
+                english_message = translate_response['translated_text']
+            else:
+                return jsonify({
+                    "error": f"Translation failed: {translate_response.get('error', 'Unknown error')}"
+                }), 500
         else:
-            resp = nlp_result if nlp_result else []
+            english_message = message
+
+        # Step 2: Process with NLP using English text
+        try:
+            nlp_result = nlpcall(english_message)
+            if isinstance(nlp_result, dict):
+                resp = nlp_result.get("response", [])
+                conf = nlp_result.get("confidence", 0)
+            else:
+                resp = nlp_result if nlp_result else []
+                conf = 0
+        except Exception as e:
+            print(f"Error in nlpcall: {str(e)}")
+            resp = ["I apologize, but I encountered an error processing your request. Please try again."]
             conf = 0
-    except Exception as e:
-        print(f"Error in nlpcall: {str(e)}")
-        resp = ["I apologize, but I encountered an error processing your request. Please try again."]
-        conf = 0
 
-    try:
-        hint_result = hint(message)
-    except Exception as e:
-        print(f"Error in hint: {str(e)}")
-        hint_result = ""
+        # Ensure resp is a list
+        if not isinstance(resp, list):
+            resp = [str(resp)]
 
-    # Ensure resp is a list
-    if not isinstance(resp, list):
-        resp = [str(resp)]
+        # Step 3: Translate response back to user language if needed
+        if user_language.lower() != "english":
+            # Join response list into single string for translation
+            response_text = "\n".join(resp) if isinstance(resp, list) else str(resp)
+            translate_back_response = translate_from_english(response_text, user_language)
+            if translate_back_response['success']:
+                translated_resp = [translate_back_response['translated_text']]
+            else:
+                # If translation fails, return original response
+                translated_resp = resp
+        else:
+            translated_resp = resp
+
+        # Step 4: Get hint if available
+        try:
+            hint_result = hint(english_message)
+        except Exception as e:
+            print(f"Error in hint: {str(e)}")
+            hint_result = ""
+
+        # Convert confidence to float
+        try:
+            conf = float(conf) if conf is not None else 0
+        except (TypeError, ValueError):
+            conf = 0
+
+        return jsonify({
+            "response": translated_resp,
+            "confidence": conf,
+            "confidence_score": conf,
+            "hint": hint_result,
+            "user": request.user["email"],
+            "user_language": user_language
+        }), 200
     
-    # Convert confidence to float
-    try:
-        conf = float(conf) if conf is not None else 0
-    except (TypeError, ValueError):
-        conf = 0
-
-    return jsonify({
-        "response": resp,
-        "confidence": conf,
-        "confidence_score": conf,
-        "hint": hint_result,
-        "user": request.user["email"]
-    }), 200
+    except Exception as e:
+        print(f"Error in chat_api: {str(e)}")
+        return jsonify({
+            "error": f"An error occurred: {str(e)}"
+        }), 500
 
 # --------------------------------------------------
 # Static Pages
