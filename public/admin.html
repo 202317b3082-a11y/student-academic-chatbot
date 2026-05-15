@@ -2,342 +2,680 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel</title>
+<title>Academic Chatbot Admin Panel</title>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  background: #f4f6f9;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    color: #2d3748;
+    min-height: 100vh;
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* TOP BAR */
+/* Layout */
+.layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Top bar */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: #1e293b;
-  color: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 70px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    z-index: 10;
 }
 
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.topbar-brand {
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
+.topbar div:first-child {
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #2b6cb0, #4299e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
 }
 
 .user-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
 }
 
-.user-details {
-  text-align: right;
+/* Navigation bar */
+.nav-bar {
+    display: flex;
+    gap: 15px;
+    padding: 15px 40px;
+    background: linear-gradient(90deg, #1a202c, #2d3748);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
+.nav-bar .nav-item {
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #a0aec0;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    letter-spacing: 0.3px;
 }
 
-.user-email {
-  font-size: 12px;
-  color: #cbd5e1;
+.nav-bar .nav-item:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-1px);
 }
 
-.logout-btn {
-  padding: 8px 16px;
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background 0.3s ease;
+.nav-bar .nav-item.active {
+    background: #fff;
+    color: #1a202c;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
 }
 
-.logout-btn:hover {
-  background: #b91c1c;
+/* Content */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
 }
 
-/* NAV */
-nav {
-  display: flex;
-  gap: 10px;
-  padding: 15px;
-  background: #111827;
+.window {
+    display: none;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    border: 1px solid rgba(255,255,255,0.6);
+    animation: fadeIn 0.4s ease forwards;
 }
 
-nav button {
-  padding: 10px 16px;
-  border: none;
-  background: #1f2937;
-  color: #fff;
-  cursor: pointer;
-  border-radius: 6px;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-nav button.active {
-  background: #2563eb;
+.window.active {
+    display: block;
 }
 
-/* CONTAINER */
-.container {
-  padding: 20px;
+h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #1a202c;
 }
 
-.panel {
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
+h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 30px 0 15px;
+    color: #2d3748;
 }
 
-.hidden {
-  display: none;
+p {
+    color: #718096;
+    margin-bottom: 25px;
+    line-height: 1.6;
 }
 
-/* METRICS */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+/* Metric cards */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
 }
 
 .card {
-  background: #111827;
-  color: #fff;
-  padding: 15px;
-  border-radius: 10px;
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    text-align: left;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card h4 {
-  font-size: 14px;
-  color: #9ca3af;
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -8px rgba(0,0,0,0.1);
 }
 
-.card p {
-  font-size: 22px;
-  font-weight: bold;
+.card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* PROGRESS */
-.progress {
-  height: 10px;
-  background: #374151;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 5px;
+.card .value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2b6cb0;
+    margin: 12px 0;
+    letter-spacing: -1px;
 }
 
-.progress i {
-  display: block;
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg,#22c55e,#06b6d4);
-  transition: width 0.5s ease;
+/* Table */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    border: 1px solid #e2e8f0;
 }
 
-/* TABLE */
-.table {
-  width: 100%;
-  border-collapse: collapse;
+th, td {
+    padding: 16px 20px;
+    font-size: 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.table th, .table td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
+th {
+    background-color: #f7fafc;
+    font-weight: 600;
+    text-align: left;
+    color: #4a5568;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
 }
 
-/* INPUT */
+td {
+    background-color: #fff;
+    color: #2d3748;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background-color: #f7fafc;
+}
+
+/* Confidence bar */
+.confidence-bar {
+    width: 100%;
+    height: 8px;
+    background: #edf2f7;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.confidence-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Status */
+.pass { color: #38a169; font-weight: 600; background: #c6f6d5; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 12px; }
+.fail { color: #e53e3e; font-weight: 600; background: #fed7d7; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 12px; }
+
+/* Forms & Buttons */
 .input, textarea, select {
-  padding: 10px;
-  width: 100%;
-  margin-bottom: 10px;
+    padding: 12px 16px;
+    width: 100%;
+    margin-bottom: 16px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background: #fff;
 }
 
-/* BUTTON */
+.input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+}
+
 .btn {
-  padding: 8px 12px;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(49, 130, 206, 0.3);
+    background: linear-gradient(135deg, #2b6cb0, #2c5282);
 }
 
 .btn-danger {
-  background: #dc2626;
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    box-shadow: 0 4px 6px rgba(229, 62, 62, 0.2);
 }
 
-/* KB */
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c53030, #9b2c2c);
+    box-shadow: 0 6px 12px rgba(229, 62, 62, 0.3);
+}
+
+.logout-btn {
+    padding: 8px 18px;
+    background: transparent;
+    color: #e53e3e;
+    border: 1px solid #fc8181;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: #fff5f5;
+    border-color: #e53e3e;
+    transform: translateY(-1px);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    margin-left: 24px;
+    padding: 8px 16px;
+    background: #f7fafc;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: #edf2f7;
+    color: #2d3748;
+}
+
+/* KB Item */
 .kb-item {
-  border: 1px solid #eee;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  background: #fff;
-  transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.3s ease;
 }
 
 .kb-item:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+    transform: translateY(-2px);
 }
 
-/* SCROLL */
 #feedbackReport {
-  max-height: 400px;
-  overflow-y: auto;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#feedbackReport::-webkit-scrollbar { width: 8px; }
+#feedbackReport::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+#feedbackReport::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+#feedbackReport::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+/* Dark Mode */
+body.dark-mode {
+    background: linear-gradient(135deg, #1a202c 0%, #171923 100%);
+    color: #e2e8f0;
+}
+
+body.dark-mode .topbar {
+    background: rgba(26, 32, 44, 0.85);
+    border-bottom-color: #2d3748;
+    color: #e2e8f0;
+}
+
+body.dark-mode .topbar div:first-child {
+    background: linear-gradient(90deg, #63b3ed, #90cdf4);
+    -webkit-background-clip: text;
+}
+
+body.dark-mode .window {
+    background: rgba(45, 55, 72, 0.8);
+    border-color: rgba(255,255,255,0.05);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode h1, body.dark-mode h2 {
+    color: #f7fafc;
+}
+
+body.dark-mode p {
+    color: #a0aec0;
+}
+
+body.dark-mode .card {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+body.dark-mode .card h3 {
+    color: #a0aec0;
+}
+
+body.dark-mode .card .value {
+    color: #63b3ed;
+}
+
+body.dark-mode table {
+    border-color: #4a5568;
+}
+
+body.dark-mode th {
+    background-color: #1a202c;
+    color: #a0aec0;
+    border-color: #4a5568;
+}
+
+body.dark-mode td {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+body.dark-mode tr:hover td {
+    background-color: #2a4365;
+}
+
+body.dark-mode .confidence-bar {
+    background: #4a5568;
+}
+
+body.dark-mode .kb-item {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+body.dark-mode .input, body.dark-mode textarea, body.dark-mode select {
+    background: #1a202c;
+    color: #e2e8f0;
+    border-color: #4a5568;
+}
+
+body.dark-mode .input:focus, body.dark-mode textarea:focus, body.dark-mode select:focus {
+    border-color: #63b3ed;
+    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.15);
+}
+
+body.dark-mode .theme-toggle {
+    background: #2d3748;
+    color: #e2e8f0;
+    border-color: #4a5568;
+}
+
+body.dark-mode .theme-toggle:hover {
+    background: #4a5568;
+}
+
+body.dark-mode .logout-btn {
+    border-color: #e53e3e;
+}
+
+body.dark-mode .logout-btn:hover {
+    background: rgba(229, 62, 62, 0.1);
 }
 </style>
 </head>
 
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="topbar-brand">Admin Dashboard</div>
-  </div>
-  <div class="user-info">
-    <div class="user-details">
-      <div class="user-name" id="adminName">Admin</div>
-      <div class="user-email" id="adminEmail">admin@example.com</div>
-    </div>
-    <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
-  </div>
-</div>
+<div class="layout">
 
-<nav>
-  <button id="tabAnalytics">Analytics</button>
-  <button id="tabUsers">Users</button>
-  <button id="tabKB">Knowledge Base</button>
-  <button id="tabFeedback">Feedback</button>
-</nav>
-
-<div class="container">
-
-<!-- ANALYTICS -->
-<div id="analytics" class="panel hidden">
-  <h2>Analytics</h2>
-
-  <div class="metrics-grid">
-    <div class="card"><h4>Total</h4><p id="totalFeedback">0</p></div>
-    <div class="card"><h4>Helpful</h4><p id="helpfulCount">0</p></div>
-    <div class="card"><h4>Not Helpful</h4><p id="notHelpfulCount">0</p></div>
-
-    <div class="card">
-      <h4>Accuracy</h4>
-      <p id="metricAccuracy">0%</p>
-      <div class="progress"><i id="barAccuracy"></i></div>
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div>Academic Chatbot – Admin</div>
+        <div class="user-info">
+            <span id="adminNameDisplay">Admin User</span> | <span id="adminEmailDisplay">admin@university.edu</span>
+            <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+            <button class="logout-btn" style="margin-left: 20px;" onclick="logoutAdmin()">Logout</button>
+        </div>
     </div>
 
-    <div class="card">
-      <h4>Precision</h4>
-      <p id="metricPrecision">0%</p>
-      <div class="progress"><i id="barPrecision"></i></div>
+    <!-- Navigation -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showWindow(event, 'analytics')">Analytics</div>
+        <div class="nav-item" onclick="showWindow(event, 'users')">User Management</div>
+        <div class="nav-item" onclick="showWindow(event, 'kb')">Update Knowledge Base</div>
+        <div class="nav-item" onclick="showWindow(event, 'feedback')">Feedback View</div>
     </div>
 
-    <div class="card">
-      <h4>Recall</h4>
-      <p id="metricRecall">0%</p>
-      <div class="progress"><i id="barRecall"></i></div>
+    <!-- Content -->
+    <div class="content">
+
+        <!-- Analytics -->
+        <div id="analytics" class="window active">
+            <h1>Model Evaluation</h1>
+            <p>Performance metrics and test results</p>
+
+            <div class="metrics">
+                <div class="card">
+                    <h3>Accuracy</h3>
+                    <div class="value" id="accuracy">0%</div>
+                    <div class="confidence-bar"><div id="accuracy-bar" class="confidence-fill" style="width:0%"></div></div>
+                    <span id="accuracy-detail"></span>
+                </div>
+                <div class="card">
+                    <h3>Precision</h3>
+                    <div class="value" id="precision">0%</div>
+                    <div class="confidence-bar"><div id="precision-bar" class="confidence-fill" style="width:0%"></div></div>
+                </div>
+                <div class="card">
+                    <h3>Recall</h3>
+                    <div class="value" id="recall">0%</div>
+                    <div class="confidence-bar"><div id="recall-bar" class="confidence-fill" style="width:0%"></div></div>
+                </div>
+                <div class="card">
+                    <h3>F1-Score</h3>
+                    <div class="value" id="f1">0%</div>
+                    <div class="confidence-bar"><div id="f1-bar" class="confidence-fill" style="width:0%"></div></div>
+                </div>
+            </div>
+
+            <h2>Test Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Test Query</th>
+                        <th>Expected</th>
+                        <th>Predicted</th>
+                        <th>Confidence</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Users -->
+        <div id="users" class="window">
+            <h1>User Management</h1>
+            <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Action</th></tr></thead>
+                <tbody id="userTable"></tbody>
+            </table>
+        </div>
+
+        <!-- KB -->
+        <div id="kb" class="window">
+            <h1>Update Knowledge Base</h1>
+            <p class="placeholder">Add, edit, or remove FAQs and responses.</p>
+            
+            <div style="margin-bottom: 20px; padding: 15px; background: #d4edff; border-radius: 8px; border-left: 4px solid #0080c0;">
+                <h3 style="margin-top: 0; color: #0080c0;">📚 Add New Policy to Knowledge Base</h3>
+                <p style="color: #444; margin-bottom: 15px;">Enter your policy details directly as a paragraph below:</p>
+                <div style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #0080c0;">Policy Details:</label>
+                  <textarea id="kbNewText" style="padding: 10px; width: 100%; min-height: 150px; border: 2px solid #0080c0; border-radius: 6px; font-family: Arial, sans-serif;" placeholder="Enter the policy details as a paragraph..."></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <select id="kbNewLang" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff;">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                  </select>
+                  <button class="btn" onclick="addKB()" style="width: 100%; background: #0080c0;">Add Policy</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                <h3 style="margin-top: 0;">Search Policies</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                  <input id="kbSearch" class="input" placeholder="Search by keyword..." style="margin-bottom: 0;">
+                  <select id="kbLang" style="margin-bottom: 0;">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                  </select>
+                  <button class="btn" onclick="searchKB()" style="width: 100%; margin-bottom: 0;">Search</button>
+                </div>
+            </div>
+
+            <div id="kbResults" style="margin-bottom: 30px;"></div>
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback" class="window">
+            <h1>Feedback View</h1>
+            <p class="placeholder">Review feedback and low-confidence responses.</p>
+            <div id="feedbackReport"></div>
+        </div>
+
     </div>
-
-    <div class="card">
-      <h4>F1 Score</h4>
-      <p id="metricF1">0%</p>
-      <div class="progress"><i id="barF1"></i></div>
-    </div>
-  </div>
-
-  <h3>Feedback Progress</h3>
-
-  <!-- ✅ TABLE -->
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Query</th>
-        <th>Feedback</th>
-        <th>Confidence</th>
-      </tr>
-    </thead>
-    <tbody id="feedbackList"></tbody>
-  </table>
-</div>
-
-<!-- USERS -->
-<div id="users" class="panel hidden">
-  <h2>Users</h2>
-  <table class="table">
-    <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Action</th></tr></thead>
-    <tbody id="userTable"></tbody>
-  </table>
-</div>
-
-<!-- KB -->
-<div id="kb" class="panel hidden">
-  <h2>College Policies & Knowledge Base</h2>
-  
-  <div style="margin-bottom: 20px; padding: 15px; background: #ffeaa7; border-radius: 8px; border-left: 4px solid #fdcb6e;">
-    <h3 style="margin-top: 0; color: #d63031;">✨ New KB Section</h3>
-    <p style="color: #2d3436; margin-bottom: 0;">This is the new Knowledge Base section where you can manage college policies. Start by adding new policies or searching existing ones below.</p>
-  </div>
-<div style="padding: 15px; background: #d4edff; border-radius: 8px; border-left: 4px solid #0080c0;">
-    <h3 style="margin-top: 0; color: #0080c0;">📚 Add New Policy to Knowledge Base</h3>
-    <p style="color: #444; margin-bottom: 15px;">Enter your policy details directly as a paragraph below:</p>
-    <div style="margin-bottom: 15px;">
-      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #0080c0;">Policy Details:</label>
-      <textarea id="kbNewText" style="padding: 10px; width: 100%; min-height: 150px; border: 2px solid #0080c0; border-radius: 6px; font-family: Arial, sans-serif;" placeholder="Enter the policy details as a paragraph..."></textarea>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <select id="kbNewLang" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff;">
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-      </select>
-      <button class="btn" onclick="addKB()" style="width: 100%; background: #0080c0;">Add Policy</button>
-    </div>
-  </div>
-  <div style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
-    <h3 style="margin-top: 0;">Search Policies</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-      <input id="kbSearch" class="input" placeholder="Search by keyword..." style="margin-bottom: 0;">
-      <select id="kbLang" style="margin-bottom: 0;">
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-      </select>
-      <button class="btn" onclick="searchKB()" style="width: 100%; margin-bottom: 0;">Search</button>
-    </div>
-  </div>
-
-  <div id="kbResults" style="margin-bottom: 30px;"></div>
-
-  <hr style="margin: 30px 0; border: none; border-top: 2px solid #ddd;">
-
-  
-</div>
-
-<!-- FEEDBACK -->
-<div id="feedback" class="panel hidden">
-  <h2>Feedback</h2>
-  <div id="feedbackReport"></div>
-</div>
-
 </div>
 
 <script>
+
+const CONFIDENCE_THRESHOLD = 0.70;
+
+const testData = [
+    { q:"OpenAthens account creation?", e:"Library", p:"Library", c:0.92 },
+    { q:"Payment done but status not updated", e:"Registration", p:"Registration", c:0.88 },
+    { q:"Late arrival for exam", e:"Examination", p:"Examination", c:0.85 },
+    { q:"Join alumni community", e:"Alumni", p:"Alumni", c:0.94 },
+    { q:"RRA / E grade clearance", e:"Project/Viva", p:"Project/Viva", c:0.91 },
+    { q:"International exchange eligibility", e:"Unknown", p:"Registration", c:0.37 }
+];
+
+function showWindow(event, id) {
+    document.querySelectorAll(".window").forEach(w => w.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    event.target.classList.add("active");
+    
+    // Trigger data loading based on tab
+    if (id === 'analytics') evaluateMetrics();
+    if (id === 'users') loadUsers();
+    if (id === 'kb') searchKB();
+    if (id === 'feedback') loadFeedbackReport();
+}
+
+async function evaluateMetrics() {
+    try {
+        const res = await fetch('/admin/feedback');
+        if (!res.ok) throw new Error('Failed to fetch metrics');
+        const data = await res.json();
+        
+        // Update metrics cards
+        if (data.metrics) {
+            const acc = data.metrics.accuracy || 0;
+            const prec = data.metrics.precision || 0;
+            const rec = data.metrics.recall || 0;
+            const f1 = data.metrics.f1 || 0;
+
+            document.getElementById("accuracy").innerText = acc.toFixed(1) + "%";
+            document.getElementById("accuracy-bar").style.width = acc + "%";
+            document.getElementById("accuracy-bar").style.background = acc >= 70 ? 'green' : 'orange';
+
+            document.getElementById("accuracy-detail").innerText = `${data.metrics.yes || 0}/${data.metrics.total || 0} Correct`;
+            
+            document.getElementById("precision").innerText = prec.toFixed(1) + "%";
+            document.getElementById("precision-bar").style.width = prec + "%";
+            document.getElementById("precision-bar").style.background = prec >= 70 ? 'green' : 'orange';
+
+            document.getElementById("recall").innerText = rec.toFixed(1) + "%";
+            document.getElementById("recall-bar").style.width = rec + "%";
+            document.getElementById("recall-bar").style.background = rec >= 70 ? 'green' : 'orange';
+
+            document.getElementById("f1").innerText = f1.toFixed(1) + "%";
+            document.getElementById("f1-bar").style.width = f1 + "%";
+            document.getElementById("f1-bar").style.background = f1 >= 70 ? 'green' : 'orange';
+        }
+
+        const tbody = document.getElementById("results-body");
+        tbody.innerHTML = "";
+
+        if (data.items && data.items.length > 0) {
+            data.items.forEach(d => {
+                const query = d.user_query || 'N/A';
+                
+                // Only allow 'yes' and 'no' for Expected/Predicted.
+                const expected = 'yes';
+                
+                let fb = (d.feedback || '').toLowerCase().trim();
+                const predicted = (fb === 'yes') ? 'yes' : 'no';
+                
+                let confStr = d.confidence_score || '0';
+                let conf = parseFloat(confStr);
+                if (conf > 1) { conf = conf / 100; }
+                if (isNaN(conf)) { conf = 0; }
+                
+                const status = (expected === predicted && conf >= CONFIDENCE_THRESHOLD) ? "Pass" : "Fail";
+                const barColor = (conf * 100) >= 70 ? 'green' : 'orange';
+                
+                tbody.innerHTML += `
+        <tr>
+            <td>${query}</td>
+            <td>${expected}</td>
+            <td>${predicted}</td>
+            <td>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width:${conf*100}%; background:${barColor};"></div>
+                </div>
+                ${(conf*100).toFixed(0)}%
+            </td>
+            <td class="${status.toLowerCase()}">${status}</td>
+        </tr>`;
+            });
+        } else {
+            tbody.innerHTML = "<tr><td colspan='5'>No test results available</td></tr>";
+        }
+    } catch (error) {
+        console.error('Error loading metrics:', error);
+        document.getElementById("results-body").innerHTML = "<tr><td colspan='5'>Error loading test results</td></tr>";
+    }
+}
 
 /* LOAD ADMIN INFO */
 async function loadAdminInfo() {
@@ -345,8 +683,8 @@ async function loadAdminInfo() {
     const res = await fetch('/me');
     if (!res.ok) throw new Error('Not authenticated');
     const data = await res.json();
-    document.getElementById('adminName').textContent = data.name || 'Admin';
-    document.getElementById('adminEmail').textContent = data.email || 'admin@example.com';
+    document.getElementById('adminNameDisplay').textContent = data.name || 'Admin';
+    document.getElementById('adminEmailDisplay').textContent = data.email || 'admin@example.com';
   } catch (error) {
     console.error('Error loading admin info:', error);
   }
@@ -370,33 +708,8 @@ async function logoutAdmin() {
 /* INITIAL LOAD */
 document.addEventListener('DOMContentLoaded', () => {
   loadAdminInfo();
-  loadAnalytics();
+  evaluateMetrics();
 });
-const tabs = {
-  tabAnalytics: 'analytics',
-  tabUsers: 'users',
-  tabKB: 'kb',
-  tabFeedback: 'feedback'
-};
-
-Object.keys(tabs).forEach(id => {
-  document.getElementById(id).onclick = () => showTab(id);
-});
-
-function showTab(id) {
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-
-  document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-  document.getElementById(tabs[id]).classList.remove('hidden');
-
-  if (tabs[id]==='users') loadUsers();
-  if (tabs[id]==='kb') searchKB();
-  if (tabs[id]==='analytics') loadAnalytics();
-  if (tabs[id]==='feedback') loadFeedbackReport();
-}
-
-showTab('tabUsers');
 
 /* USERS */
 async function loadUsers() {
@@ -404,6 +717,7 @@ async function loadUsers() {
     const res = await fetch('/admin/users');
     if (!res.ok) throw new Error('Failed to fetch users');
     const data = await res.json();
+    const userTable = document.getElementById('userTable');
     userTable.innerHTML = '';
 
     if (!data.users || data.users.length === 0) {
@@ -428,6 +742,7 @@ async function loadUsers() {
     });
   } catch (error) {
     console.error('Error loading users:', error);
+    const userTable = document.getElementById('userTable');
     userTable.innerHTML = "<tr><td colspan='5'>Error loading users</td></tr>";
   }
 }
@@ -464,6 +779,10 @@ async function deleteUser(email) {
 /* KB */
 async function searchKB() {
   try {
+    const kbSearch = document.getElementById('kbSearch');
+    const kbLang = document.getElementById('kbLang');
+    const kbResults = document.getElementById('kbResults');
+    
     const q = kbSearch.value || '';
     const lang = kbLang.value || 'en';
     const res = await fetch(`/admin/kb?q=${encodeURIComponent(q)}&lang=${lang}`);
@@ -505,6 +824,7 @@ async function searchKB() {
     });
   } catch (error) {
     console.error('Error searching KB:', error);
+    const kbResults = document.getElementById('kbResults');
     kbResults.innerHTML = '<p style="color: #dc2626; padding: 20px; text-align: center;">Error loading policies</p>';
   }
 }
@@ -520,6 +840,7 @@ function cancelKBEdit(id) {
 
 async function saveKBEdit(id) {
   try {
+    const kbLang = document.getElementById('kbLang');
     const newText = document.getElementById(`edit_text_${id}`).value.trim();
     const lang = kbLang.value || 'en';
     if (!newText) {
@@ -542,6 +863,8 @@ async function saveKBEdit(id) {
 
 async function addKB() {
   try {
+    const kbNewText = document.getElementById('kbNewText');
+    const kbNewLang = document.getElementById('kbNewLang');
     const text = (kbNewText.value || '').trim();
     const lang = kbNewLang.value || 'en';
     
@@ -550,7 +873,6 @@ async function addKB() {
       return;
     }
     
-    // Format as "Policy: ..."
     const formattedText = `Policy: ${text}`;
     
     const res = await fetch('/admin/kb', {
@@ -572,6 +894,7 @@ async function addKB() {
 async function deleteKB(id) {
   if (!confirm("Are you sure you want to delete this policy? This action cannot be undone.")) return;
   try {
+    const kbLang = document.getElementById('kbLang');
     const lang = kbLang.value || 'en';
     const res = await fetch(`/admin/kb/${id}?lang=${lang}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete policy');
@@ -589,6 +912,7 @@ async function loadFeedbackReport() {
     const res = await fetch('/admin/feedback');
     if (!res.ok) throw new Error('Failed to fetch feedback');
     const data = await res.json();
+    const feedbackReport = document.getElementById('feedbackReport');
     feedbackReport.innerHTML = '';
 
     if (!data.items || data.items.length === 0) {
@@ -597,73 +921,32 @@ async function loadFeedbackReport() {
     }
 
     data.items.forEach(it => {
+      let confStr = it.confidence_score || '0';
+      let conf = parseFloat(confStr);
+      if (conf > 1) { conf = conf / 100; }
+      if (isNaN(conf)) { conf = 0; }
+      const confPercent = (conf * 100).toFixed(0);
+
       feedbackReport.innerHTML += `
         <div>
           <strong>${it.user_query || 'N/A'}</strong><br>
           <small><em>${it.chatbot_response || 'N/A'}</em></small><br>
           <strong>Feedback:</strong> ${it.feedback || 'N/A'}<br>
-          <small>User: ${it.user_email || 'N/A'} | Confidence: ${it.confidence_score || '0'}%</small>
+          <small>User: ${it.user_email || 'N/A'} | Confidence: ${confPercent}%</small>
           <hr>
         </div>`;
     });
   } catch (error) {
     console.error('Error loading feedback:', error);
+    const feedbackReport = document.getElementById('feedbackReport');
     feedbackReport.innerHTML = '<p>Error loading feedback</p>';
   }
 }
 
-/* ANALYTICS */
-function setBar(id,value){
-  const bar=document.getElementById(id);
-  bar.style.width=value+"%";
+function toggleTheme() {
+  document.body.classList.toggle('dark-mode');
 }
 
-async function loadAnalytics(){
-  try {
-    const res = await fetch('/admin/feedback');
-    if (!res.ok) throw new Error('Failed to fetch analytics');
-    const data = await res.json();
-
-    totalFeedback.textContent = data.metrics?.total || 0;
-    helpfulCount.textContent = data.metrics?.yes || 0;
-    notHelpfulCount.textContent = data.metrics?.no || 0;
-
-    setBar("barAccuracy", data.metrics?.accuracy || 0);
-    setBar("barPrecision", data.metrics?.precision || 0);
-    setBar("barRecall", data.metrics?.recall || 0);
-    setBar("barF1", data.metrics?.f1 || 0);
-
-    metricAccuracy.textContent = (data.metrics?.accuracy || 0) + "%";
-    metricPrecision.textContent = (data.metrics?.precision || 0) + "%";
-    metricRecall.textContent = (data.metrics?.recall || 0) + "%";
-    metricF1.textContent = (data.metrics?.f1 || 0) + "%";
-
-    feedbackList.innerHTML = '';
-
-    if (!data.items || data.items.length === 0) {
-      feedbackList.innerHTML = "<tr><td colspan='3'>No feedback</td></tr>";
-      return;
-    }
-
-    data.items.forEach(it => {
-      const score = it.confidence_score || 0;
-      feedbackList.innerHTML += `
-        <tr>
-          <td>${it.user_query || ''}</td>
-          <td>${it.feedback || ''}</td>
-          <td>
-            <div class="progress">
-              <i style="width:${score}%"></i>
-            </div>
-            <small>${score}%</small>
-          </td>
-        </tr>`;
-    });
-  } catch (error) {
-    console.error('Error loading analytics:', error);
-    feedbackList.innerHTML = "<tr><td colspan='3'>Error loading data</td></tr>";
-  }
-}
 </script>
 
 </body>

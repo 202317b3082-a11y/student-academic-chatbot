@@ -1071,6 +1071,11 @@ function formatBotResponse(response) {
       return "No response found.";
     }
 
+    // If single item, display without list formatting
+    if (response.length === 1) {
+      return escapeHtml(response[0]);
+    }
+
     return `
       <ul>
         ${response.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
@@ -1082,7 +1087,7 @@ function formatBotResponse(response) {
     return "No response found.";
   }
 
-  return String(response);
+  return escapeHtml(String(response));
 }
 
 function getConfidenceFromChatResponse(data) {
@@ -1114,6 +1119,7 @@ async function sendMessage() {
   userInput.value = "";
 
   showTyping();
+  showTranslationStatus("Translating...");
 
   try {
     const languageSelect = document.getElementById("languageSelect");
@@ -1138,6 +1144,7 @@ async function sendMessage() {
     const data = await response.json();
 
     removeTyping();
+    hideTranslationStatus();
 
     const botResponse = formatBotResponse(data.response);
     const confidenceScore = getConfidenceFromChatResponse(data);
@@ -1158,7 +1165,8 @@ async function sendMessage() {
       lastUserMessage,
       false,
       botIndex,
-      confidenceScore
+      confidenceScore,
+      data.user_language
     );
 
     if (data.hint && String(data.hint).trim()) {
@@ -1171,10 +1179,11 @@ async function sendMessage() {
     console.error("Chat error:", error);
 
     removeTyping();
+    hideTranslationStatus();
 
-    const errorMessage = "Server error.";
+    const errorMessage = "Sorry, I encountered an error. Please try again.";
 
-    addMessage(errorMessage, "bot", lastUserMessage, false, null, "");
+    addMessage(errorMessage, "bot", lastUserMessage, false, null, "", "");
     saveMessage(errorMessage, "bot", lastUserMessage, false, "");
   }
 }
@@ -1185,7 +1194,8 @@ function addMessage(
   userQuery = "",
   feedbackSubmitted = false,
   messageIndex = null,
-  confidenceScore = ""
+  confidenceScore = "",
+  userLanguage = ""
 ) {
   const messageDiv = document.createElement("div");
   messageDiv.className = "message " + type;
@@ -1201,6 +1211,7 @@ function addMessage(
   messageDiv.appendChild(content);
 
   if (type === "bot") {
+    // Show confidence score
     if (
       confidenceScore !== "" &&
       confidenceScore !== null &&
@@ -1216,6 +1227,17 @@ function addMessage(
         : `<strong>Confidence:</strong> ${escapeHtml(confidenceScore)}`;
 
       messageDiv.appendChild(confidenceDiv);
+    }
+
+    // Show translation language indicator if not English
+    if (userLanguage && userLanguage.toLowerCase() !== "english") {
+      const langDiv = document.createElement("div");
+      langDiv.className = "language-indicator";
+      langDiv.style.fontSize = "11px";
+      langDiv.style.color = "var(--muted)";
+      langDiv.style.marginTop = "4px";
+      langDiv.innerHTML = `<em>Responded in ${escapeHtml(userLanguage)}</em>`;
+      messageDiv.appendChild(langDiv);
     }
 
     const feedbackContainer = document.createElement("div");
@@ -1297,6 +1319,33 @@ function showTyping() {
 
 function removeTyping() {
   document.getElementById("typing")?.remove();
+}
+
+function showTranslationStatus(message) {
+  let status = document.getElementById("translationStatus");
+  if (!status) {
+    status = document.createElement("div");
+    status.id = "translationStatus";
+    status.style.cssText = `
+      padding: 10px 14px;
+      margin: 8px 0;
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+    messages.appendChild(status);
+  }
+  status.innerHTML = `<span>⟳</span> ${message}`;
+  scrollMessagesToBottom();
+}
+
+function hideTranslationStatus() {
+  document.getElementById("translationStatus")?.remove();
 }
 
 let draggingPanel = null;
