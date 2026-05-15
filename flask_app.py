@@ -17,7 +17,7 @@ from suggestion import hint
 from evaluation import evaluate, metrics
 
 # --------------------------------------------------
-# Flask App Configuration
+# FlaskApp         Configuration
 # --------------------------------------------------
 
 app = Flask(
@@ -216,17 +216,19 @@ def chat_api():
 
     try:
         # Step 1: Translate user message to English if needed
+        english_message = message
+        detected_language = user_language
+        
         if user_language.lower() != "english":
             translate_response = translate_to_english(message, user_language)
+            print("Translation response:", translate_response)
             if translate_response['success']:
                 english_message = translate_response['translated_text']
             else:
-                return jsonify({
-                    "error": f"Translation failed: {translate_response.get('error', 'Unknown error')}"
-                }), 500
-        else:
-            english_message = message
-
+                # Log error but continue with original message
+                print(f"Translation warning: {translate_response.get('error', 'Unknown error')}")
+                english_message = message
+        
         # Step 2: Process with NLP using English text
         try:
             nlp_result = nlpcall(english_message)
@@ -243,17 +245,18 @@ def chat_api():
 
         # Ensure resp is a list
         if not isinstance(resp, list):
-            resp = [str(resp)]
+            resp = [str(resp)] if resp else ["No response generated"]
 
         # Step 3: Translate response back to user language if needed
         if user_language.lower() != "english":
-            # Join response list into single string for translation
             response_text = "\n".join(resp) if isinstance(resp, list) else str(resp)
             translate_back_response = translate_from_english(response_text, user_language)
+            print("Back-translation response:", translate_back_response)
             if translate_back_response['success']:
                 translated_resp = [translate_back_response['translated_text']]
             else:
-                # If translation fails, return original response
+                # If translation fails, return original response with warning
+                print(f"Back-translation warning: {translate_back_response.get('error', 'Unknown error')}")
                 translated_resp = resp
         else:
             translated_resp = resp
@@ -277,7 +280,8 @@ def chat_api():
             "confidence_score": conf,
             "hint": hint_result,
             "user": request.user["email"],
-            "user_language": user_language
+            "user_language": user_language,
+            "detected_language": detected_language
         }), 200
     
     except Exception as e:

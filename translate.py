@@ -1,194 +1,230 @@
-import requests
-import json
-from typing import Optional
+from sarvamai import SarvamAI
 
-# Configuration
-NVIDIA_API_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
-NVIDIA_API_KEY = "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"
-MODEL = "nvidia/nemotron-3-content-safety"
+# Initialize client
+client = SarvamAI(
+    api_subscription_key="sk_fm3qm7nr_fRfha3W00NIXikJR80tdK65V",
+)
 
+# Language mapping - from friendly names/codes to API language codes
+LANGUAGE_MAP = {
+    # Friendly names (from UI)
+    "english": "en-IN",
+    "hindi": "hi-IN",
+    "tamil": "ta-IN",
+    "telugu": "te-IN",
+    "kannada": "kn-IN",
+    "malayalam": "ml-IN",
+    "marathi": "mr-IN",
+    "gujarati": "gu-IN",
+    "bengali": "bn-IN",
+    "punjabi": "pa-IN",
+    "odia": "od-IN",
+    "assamese": "as-IN",
+    "urdu": "ur-IN",
+    # API codes (direct passthrough)
+    "en-in": "en-IN",
+    "hi-in": "hi-IN",
+    "ta-in": "ta-IN",
+    "te-in": "te-IN",
+    "kn-in": "kn-IN",
+    "ml-in": "ml-IN",
+    "mr-in": "mr-IN",
+    "gu-in": "gu-IN",
+    "bn-in": "bn-IN",
+    "pa-in": "pa-IN",
+    "od-in": "od-IN",
+    "as-in": "as-IN",
+    "ur-in": "ur-IN",
+    # Uppercase variants
+    "EN-IN": "en-IN",
+    "HI-IN": "hi-IN",
+    "TA-IN": "ta-IN",
+    "TE-IN": "te-IN",
+    "KN-IN": "kn-IN",
+    "ML-IN": "ml-IN",
+    "MR-IN": "mr-IN",
+    "GU-IN": "gu-IN",
+    "BN-IN": "bn-IN",
+    "PA-IN": "pa-IN",
+    "OD-IN": "od-IN",
+    "AS-IN": "as-IN",
+    "UR-IN": "ur-IN",
+    "auto": "auto",
+    "AUTO": "auto",
+    "Auto": "auto",
+}
 
-
-def translate_to_english(text: str, user_language: str = "auto", api_key: Optional[str] = None) -> dict:
+def get_language_code(lang: str) -> str:
     """
-    Translate user's text to English using the NVIDIA API.
-    
-    Args:
-        text (str): The text to translate
-        user_language (str): The source language (default: "auto" for auto-detection)
-        api_key (str, optional): API key. If not provided, uses default
-    
-    Returns:
-        dict: JSON response with translation data
-        {
-            "success": bool,
-            "translated_text": str,
-            "source_language": str,
-            "target_language": str,
-            "error": str (only if success is False)
-        }
+    Convert language name or code to API language code.
+    Defaults to 'auto' if language not found.
     """
+    if not lang:
+        return "auto"
+    
+    normalized = lang.strip().lower()
+    return LANGUAGE_MAP.get(normalized, "auto")
+
+
+def extract_translated_text(response) -> str:
+    """
+    Extract translated text from API response.
+    Handles TranslationResponse object, dict, and string formats.
+    """
+    if response is None:
+        return ""
+    
+    # If it's a string, return as-is
+    if isinstance(response, str):
+        return response
+    
+    # If it's a dict, extract from known fields
+    if isinstance(response, dict):
+        return response.get("output") or response.get("translated_text") or response.get("text") or str(response)
+    
+    # Try to access as TranslationResponse object with common attributes
     try:
-        # Use provided API key or default
-        key = api_key if api_key else NVIDIA_API_KEY
-        
-        # Prepare the request headers
-        headers = {
-            "Authorization": f"Bearer {key}",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+        # Try common attribute names (TranslationResponse from SarvamAI has 'translated_text')
+        if hasattr(response, "translated_text"):
+            return str(response.translated_text)
+        if hasattr(response, "output"):
+            return str(response.output)
+        if hasattr(response, "text"):
+            return str(response.text)
+        if hasattr(response, "data"):
+            return str(response.data)
+        # Fallback to string representation
+        return str(response)
+    except Exception:
+        return str(response)
+
+
+def translate_to_english(text: str, source_lang: str = "auto") -> dict:
+    """
+    Translate text from user-selected language to English.
+    """
+    if not text or not text.strip():
+        return {
+            "success": False,
+            "translated_text": text,
+            "source_language": source_lang,
+            "target_language": "English",
+            "error": "Empty text cannot be translated"
         }
+    
+    try:
+        # Convert language name/code to API format
+        api_source_lang = get_language_code(source_lang)
         
-        # Prepare the request body
-        payload = {
-            "model": MODEL,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"Translate the following text from {user_language} to English. Only provide the translation, nothing else:\n\n{text}"
-                }
-            ],
-            "max_tokens": 512,
-            "temperature": 0.20,
-            "top_p": 0.70,
-            "stream": False
-        }
-        
-        # Make the API request
-        response = requests.post(
-            NVIDIA_API_ENDPOINT,
-            headers=headers,
-            json=payload,
-            timeout=30
+        response = client.text.translate(
+            input=text.strip(),
+            source_language_code=api_source_lang,
+            target_language_code="en-IN",   # English (India)
+            speaker_gender="Male",
+            mode="formal",
+            model="mayura:v1",
+            numerals_format="native"
         )
         
-        # Check if request was successful
-        response.raise_for_status()
+        # Extract translated text from response (handles TranslationResponse object)
+        translated_text = extract_translated_text(response)
         
-        # Extract the translated text from response
-        result = response.json()
-        translated_text = result['choices'][0]['message']['content'].strip()
+        if not translated_text:
+            return {
+                "success": False,
+                "translated_text": text,
+                "source_language": source_lang,
+                "target_language": "English",
+                "error": "No translation returned from API"
+            }
         
         return {
             "success": True,
             "translated_text": translated_text,
-            "source_language": user_language,
+            "source_language": source_lang,
             "target_language": "English"
         }
-    
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return {
             "success": False,
-            "translated_text": None,
-            "source_language": user_language,
+            "translated_text": text,
+            "source_language": source_lang,
             "target_language": "English",
-            "error": f"API request failed: {str(e)}"
-        }
-    except (KeyError, IndexError) as e:
-        return {
-            "success": False,
-            "translated_text": None,
-            "source_language": user_language,
-            "target_language": "English",
-            "error": f"Failed to parse API response: {str(e)}"
+            "error": f"Translation error: {str(e)}"
         }
 
 
-def translate_from_english(text: str, target_language: str, api_key: Optional[str] = None) -> dict:
+def translate_from_english(text: str, target_lang: str) -> dict:
     """
-    Translate English text to user's target language using the NVIDIA API.
-    
-    Args:
-        text (str): The English text to translate
-        target_language (str): The target language to translate to
-        api_key (str, optional): API key. If not provided, uses default
-    
-    Returns:
-        dict: JSON response with translation data
-        {
-            "success": bool,
-            "translated_text": str,
-            "source_language": str,
-            "target_language": str,
-            "error": str (only if success is False)
+    Translate text from English to user-selected language.
+    """
+    if not text or not text.strip():
+        return {
+            "success": False,
+            "translated_text": text,
+            "source_language": "English",
+            "target_language": target_lang,
+            "error": "Empty text cannot be translated"
         }
-    """
+    
     try:
-        # Use provided API key or default
-        key = api_key if api_key else NVIDIA_API_KEY
+        # Convert language name/code to API format
+        api_target_lang = get_language_code(target_lang)
         
-        # Prepare the request headers
-        headers = {
-            "Authorization": f"Bearer {key}",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
+        # Ensure target language is not 'auto'
+        if api_target_lang == "auto":
+            return {
+                "success": False,
+                "translated_text": text,
+                "source_language": "English",
+                "target_language": target_lang,
+                "error": "Target language must be specified (cannot be 'auto')"
+            }
         
-        # Prepare the request body
-        payload = {
-            "model": MODEL,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"Translate the following English text to {target_language}. Only provide the translation, nothing else:\n\n{text}"
-                }
-            ],
-            "max_tokens": 512,
-            "temperature": 0.20,
-            "top_p": 0.70,
-            "stream": False
-        }
-        
-        # Make the API request
-        response = requests.post(
-            NVIDIA_API_ENDPOINT,
-            headers=headers,
-            json=payload,
-            timeout=30
+        response = client.text.translate(
+            input=text.strip(),
+            source_language_code="en-IN",
+            target_language_code=api_target_lang,
+            speaker_gender="Male",
+            mode="formal",
+            model="mayura:v1",
+            numerals_format="native"
         )
         
-        # Check if request was successful
-        response.raise_for_status()
+        # Extract translated text from response (handles TranslationResponse object)
+        translated_text = extract_translated_text(response)
         
-        # Extract the translated text from response
-        result = response.json()
-        translated_text = result['choices'][0]['message']['content'].strip()
+        if not translated_text:
+            return {
+                "success": False,
+                "translated_text": text,
+                "source_language": "English",
+                "target_language": target_lang,
+                "error": "No translation returned from API"
+            }
         
         return {
             "success": True,
             "translated_text": translated_text,
             "source_language": "English",
-            "target_language": target_language
+            "target_language": target_lang
         }
-    
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return {
             "success": False,
-            "translated_text": None,
+            "translated_text": text,
             "source_language": "English",
-            "target_language": target_language,
-            "error": f"API request failed: {str(e)}"
-        }
-    except (KeyError, IndexError) as e:
-        return {
-            "success": False,
-            "translated_text": None,
-            "source_language": "English",
-            "target_language": target_language,
-            "error": f"Failed to parse API response: {str(e)}"
+            "target_language": target_lang,
+            "error": f"Translation error: {str(e)}"
         }
 
 
 # Example usage
 if __name__ == "__main__":
-    # Example: Translate Spanish to English
-    spanish_text = "¿Cuál es React?"
-    print(f"Original (Spanish): {spanish_text}")
-    english_response = translate_to_english(spanish_text, "Spanish")
-    print(f"Response: {json.dumps(english_response, indent=2)}")
-    
-    # Example: Translate English back to Spanish
-    english_text = "What is React?"
-    print(f"\nOriginal (English): {english_text}")
-    spanish_response = translate_from_english(english_text, "Spanish")
-    print(f"Response: {json.dumps(spanish_response, indent=2)}")
+    # Hindi → English
+    result1 = translate_to_english("तितली मुस्कुराते हुए बोली, 'मैं जानती हूँ कि तुम कितनी ताकतवर हो, लेकिन मेरी ताकत कहीं और है। मैं जो कर सकती हूँ, वह तुम नहीं कर सकती।'", "Hindi")
+    print("Hindi → English:", result1)
+
+    # English → Hindi
+    result2 = translate_from_english("What is React?", "Hindi")
+    print("English → Hindi:", result2)

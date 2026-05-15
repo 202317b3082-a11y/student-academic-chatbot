@@ -37,7 +37,7 @@ def similarity_to_confidence(score: float) -> float:
 
 
 def nlpcall(query: str) -> dict:
-    results = vectorstore.similarity_search_with_score(query, k=3)
+    results = vectorstore.similarity_search_with_score(query, k=1)
 
     if not results:
         return {
