@@ -14,7 +14,7 @@ langchain-huggingface
 # Vector Database & Embeddings
 
 
-sarvamai
+
 
 # Data Processing
 pandas
