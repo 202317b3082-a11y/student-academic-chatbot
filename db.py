@@ -112,3 +112,69 @@ def delete_user(email):
 
     conn.commit()
     conn.close()
+
+
+# Manual Admin Responses
+def init_responses_db():
+    """Initialize responses database"""
+    conn = sqlite3.connect("response.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS admin_responses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT NOT NULL,
+            question TEXT NOT NULL,
+            response TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def save_manual_response(user_email, question, response):
+    """Save admin manual response"""
+    init_responses_db()
+    conn = sqlite3.connect("response.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO admin_responses (user_email, question, response)
+        VALUES (?, ?, ?)
+    """, (user_email, question, response))
+
+    conn.commit()
+    conn.close()
+
+
+def get_user_responses(user_email):
+    """Get all admin responses for a specific user"""
+    init_responses_db()
+    conn = sqlite3.connect("response.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM admin_responses WHERE user_email = ? ORDER BY created_at DESC
+    """, (user_email,))
+
+    responses = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in responses]
+
+
+def delete_response(response_id, user_email):
+    """Delete a specific admin response (only owner's response)"""
+    init_responses_db()
+    conn = sqlite3.connect("response.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM admin_responses WHERE id = ? AND user_email = ?
+    """, (response_id, user_email))
+
+    conn.commit()
+    conn.close()

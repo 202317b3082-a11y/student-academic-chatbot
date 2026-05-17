@@ -36,6 +36,7 @@ app.config["JWT_EXPIRY_HOURS"] = 2
 # --------------------------------------------------
 
 db.init_db()
+db.init_responses_db()
 
 # --------------------------------------------------
 # JWT Utilities
@@ -504,6 +505,49 @@ def admin_feedback_report():
     return jsonify({'items': items, 'metrics': formatted_metrics}), 200
 
 # --------------------------------------------------
+# Manual Admin Responses
+# --------------------------------------------------
+
+@app.route('/admin/manual-response', methods=['POST'])
+@jwt_required
+@admin_required
+def save_manual_response():
+    data = request.get_json()
+    user_email = data.get('user_email', '').strip()
+    question = data.get('question', '').strip()
+    response = data.get('response', '').strip()
+    
+    if not all([user_email, question, response]):
+        return jsonify({'message': 'All fields are required'}), 400
+    
+    try:
+        db.save_manual_response(user_email, question, response)
+        return jsonify({'message': 'Response saved successfully'}), 201
+    except Exception as e:
+        print(f"Error saving manual response: {str(e)}")
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+@app.route('/user/responses', methods=['GET'])
+@jwt_required
+def get_user_responses():
+    user_email = request.user['email']
+    try:
+        responses = db.get_user_responses(user_email)
+        return jsonify({'responses': responses}), 200
+    except Exception as e:
+        print(f"Error fetching responses: {str(e)}")
+        return jsonify({'responses': [], 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/user/response/<int:response_id>', methods=['DELETE'])
+@jwt_required
+def delete_user_response(response_id):
+    user_email = request.user['email']
+    try:
+        db.delete_response(response_id, user_email)
+        return jsonify({'message': 'Response deleted'}), 200
+    except Exception as e:
+        print(f"Error deleting response: {str(e)}")
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 # Run App
 # --------------------------------------------------
 
