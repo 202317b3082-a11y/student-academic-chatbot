@@ -108,14 +108,22 @@ body {
   padding: 0;
   margin: 0;
   border: none;
-  opacity: 0;
   pointer-events: none;
   transform: scale(0.98);
-  overflow: hidden;
+  overflow: visible;
+}
+
+.sidebar.collapsed .drawer-toggle,
+.history.collapsed .drawer-toggle {
+  pointer-events: auto;
+  opacity: 1;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .drawer-toggle {
-  position: absolute;
+  position: fixed;
   top: 18px;
   right: 18px;
   border: none;
@@ -125,8 +133,9 @@ body {
   height: 40px;
   border-radius: 14px;
   cursor: pointer;
-  z-index: 5;
+  z-index: 1000;
   font-size: 18px;
+  transition: all 0.3s ease;
 }
 
 .history .drawer-toggle {
@@ -351,6 +360,68 @@ body {
 
 .feedback-btn:hover {
   background: rgba(56, 189, 248, 0.12);
+}
+
+.audio-controls {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.play-btn {
+  padding: 10px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.16);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  transform: translateY(-1px);
+}
+
+.play-btn.playing {
+  background: rgba(220, 38, 38, 0.16);
+  color: #f97316;
+  border-color: #f97316;
+}
+
+.play-btn.playing:hover {
+  background: rgba(220, 38, 38, 0.25);
+}
+
+.audio-speed {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: background 150ms ease;
+}
+
+.audio-speed:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.audio-status {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .feedback-status {
@@ -725,8 +796,6 @@ body {
 <div class="container">
 
 <aside class="sidebar" id="sidebar">
-  <button class="drawer-toggle" onclick="toggleDrawer('sidebar')" aria-label="Toggle sidebar">☰</button>
-
   <div class="menu">
     <button class="active" onclick="newChat()" id="newChatBtn">New Chat</button>
     <button onclick="resetChat()">Reset Chat</button>
@@ -794,7 +863,6 @@ body {
 <div class="drag-handle history-handle" onmousedown="startDrag('history', event)" title="Drag to resize history"></div>
 
 <aside class="history" id="history">
-  <button class="drawer-toggle" onclick="toggleDrawer('history')" aria-label="Toggle history">≡</button>
   <h3>Chat History</h3>
   <ul id="chatList"></ul>
 </aside>
@@ -806,6 +874,8 @@ let chatId = "chat_" + Date.now();
 let lastUserMessage = "";
 let recognition;
 let listening = false;
+let currentSpeech = null;
+let speechSynthesis = window.speechSynthesis;
 
 const userInput = document.getElementById("userInput");
 const messages = document.getElementById("messages");
@@ -832,6 +902,7 @@ window.onload = async () => {
   applySavedTheme();
   loadChats();
   loadMessages();
+  loadAdminResponses();
 };
 
 function getMetaKey(id) {
@@ -970,14 +1041,20 @@ function loadMessages() {
   welcome.style.display = "none";
 
   stored.forEach((message, index) => {
-    addMessage(
-      message.text,
-      message.type,
-      message.userQuery,
-      message.feedbackSubmitted,
-      index,
-      message.confidenceScore || ""
-    );
+    // Handle admin responses separately
+    if (message.type === 'admin-response' && message.isAdminResponse) {
+      addAdminResponseMessage(message);
+    } else {
+      addMessage(
+        message.text,
+        message.type,
+        message.userQuery,
+        message.feedbackSubmitted,
+        index,
+        message.confidenceScore || "",
+        message.userLanguage || ""
+      );
+    }
   });
 
   scrollMessagesToBottom();
@@ -1102,6 +1179,231 @@ function getConfidenceFromChatResponse(data) {
   return "";
 }
 
+function getLanguageCode(language) {
+  const languageMap = {
+    "English": "en-US",
+    "Hindi": "hi-IN",
+    "Tamil": "ta-IN",
+    "Telugu": "te-IN",
+    "Kannada": "kn-IN",
+    "Malayalam": "ml-IN",
+    "Marathi": "mr-IN",
+    "Gujarati": "gu-IN",
+    "Bengali": "bn-IN",
+    "Punjabi": "pa-IN"
+  };
+  return languageMap[language] || "en-US";
+}
+
+function cleanTextForSpeech(htmlText) {
+  const temp = document.createElement("div");
+  temp.innerHTML = htmlText;
+  let text = temp.textContent || temp.innerText || "";
+  text = text.replace(/Overall Confidence:.*$/m, "").trim();
+  text = text.replace(/Responded in.*$/m, "").trim();
+  return text;
+}
+
+function playAudio(text, language, playButton) {
+  if (currentSpeech) {
+    speechSynthesis.cancel();
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = getLanguageCode(language);
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  playButton.classList.add("playing");
+  playButton.textContent = "⏸ Stop";
+
+  utterance.onend = () => {
+    playButton.classList.remove("playing");
+    playButton.textContent = "🔊 Play";
+    currentSpeech = null;
+  };
+
+  utterance.onerror = () => {
+    playButton.classList.remove("playing");
+    playButton.textContent = "🔊 Play";
+    currentSpeech = null;
+  };
+
+  currentSpeech = utterance;
+  speechSynthesis.speak(utterance);
+}
+
+function stopAudio(playButton) {
+  speechSynthesis.cancel();
+  playButton.classList.remove("playing");
+  playButton.textContent = "🔊 Play";
+  currentSpeech = null;
+}
+
+function toggleAudioPlayback(text, language, playButton) {
+  if (playButton.classList.contains("playing")) {
+    stopAudio(playButton);
+  } else {
+    playAudio(text, language, playButton);
+  }
+}
+
+// Add audio controls to a message element
+function addAudioControls(messageDiv, text, language) {
+  const audioControls = document.createElement("div");
+  audioControls.className = "audio-controls";
+
+  const playBtn = document.createElement("button");
+  playBtn.className = "play-btn";
+  playBtn.textContent = "🔊 Play";
+  playBtn.title = "Listen to response";
+  playBtn.onclick = () => {
+    const cleanedText = cleanTextForSpeech(text);
+    toggleAudioPlayback(cleanedText, language, playBtn);
+  };
+
+  audioControls.appendChild(playBtn);
+  messageDiv.appendChild(audioControls);
+}
+
+// Load and display admin responses
+async function loadAdminResponses() {
+  try {
+    const res = await fetch('/user/responses');
+    if (!res.ok) return;
+    
+    const data = await res.json();
+    const responses = data.responses || [];
+    
+    if (responses.length === 0) return;
+    
+    // Save each admin response to local storage and display
+    responses.forEach(adminResp => {
+      const messageData = {
+        text: adminResp.response,
+        type: 'admin-response',
+        question: adminResp.question,
+        isAdminResponse: true,
+        adminResponseId: adminResp.id,
+        timestamp: adminResp.created_at
+      };
+      
+      // Save to localStorage (persistent)
+      saveAdminResponseMessage(messageData);
+      
+      // Display in UI
+      addAdminResponseMessage(messageData);
+      
+      // Delete response after displaying and saving
+      deleteAdminResponse(adminResp.id);
+    });
+    
+    scrollMessagesToBottom();
+  } catch (error) {
+    console.error('Error loading admin responses:', error);
+  }
+}
+
+function saveAdminResponseMessage(messageData) {
+  const storedMessages = JSON.parse(localStorage.getItem(chatId) || "[]");
+
+  storedMessages.push({
+    text: messageData.text,
+    type: messageData.type,
+    question: messageData.question,
+    isAdminResponse: true,
+    timestamp: messageData.timestamp
+  });
+
+  localStorage.setItem(chatId, JSON.stringify(storedMessages));
+}
+
+function addAdminResponseMessage(message) {
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "message bot admin-response-msg";
+  
+  // Header with admin badge
+  const header = document.createElement("div");
+  header.style.display = "flex";
+  header.style.alignItems = "center";
+  header.style.marginBottom = "10px";
+  header.style.paddingBottom = "8px";
+  header.style.borderBottom = "2px solid #4caf50";
+  
+  const badge = document.createElement("span");
+  badge.style.backgroundColor = "#4caf50";
+  badge.style.color = "white";
+  badge.style.padding = "4px 12px";
+  badge.style.borderRadius = "20px";
+  badge.style.fontSize = "12px";
+  badge.style.fontWeight = "600";
+  badge.style.marginRight = "10px";
+  badge.textContent = "📧 ADMIN RESPONSE";
+  header.appendChild(badge);
+  
+  const timestamp = document.createElement("span");
+  timestamp.style.fontSize = "11px";
+  timestamp.style.color = "#999";
+  timestamp.textContent = new Date(message.timestamp).toLocaleString();
+  header.appendChild(timestamp);
+  
+  messageDiv.appendChild(header);
+  
+  // Question section
+  const questionSection = document.createElement("div");
+  questionSection.style.backgroundColor = "rgba(76, 175, 80, 0.08)";
+  questionSection.style.padding = "10px";
+  questionSection.style.borderRadius = "6px";
+  questionSection.style.marginBottom = "12px";
+  questionSection.style.borderLeft = "3px solid #4caf50";
+  
+  const questionLabel = document.createElement("div");
+  questionLabel.style.fontSize = "12px";
+  questionLabel.style.fontWeight = "600";
+  questionLabel.style.color = "#2e7d32";
+  questionLabel.style.marginBottom = "5px";
+  questionLabel.textContent = "Your Question:";
+  questionSection.appendChild(questionLabel);
+  
+  const questionText = document.createElement("div");
+  questionText.style.fontSize = "14px";
+  questionText.style.color = "#333";
+  questionText.style.fontStyle = "italic";
+  questionText.textContent = message.question;
+  questionSection.appendChild(questionText);
+  
+  messageDiv.appendChild(questionSection);
+  
+  // Response content
+  const content = document.createElement("div");
+  content.style.backgroundColor = "rgba(76, 175, 80, 0.05)";
+  content.style.padding = "12px";
+  content.style.borderRadius = "6px";
+  content.style.marginBottom = "12px";
+  content.style.lineHeight = "1.6";
+  content.innerHTML = message.text;
+  messageDiv.appendChild(content);
+  
+  // Info footer
+  const footer = document.createElement("div");
+  footer.style.fontSize = "11px";
+  footer.style.color = "#4caf50";
+  footer.style.fontWeight = "600";
+  footer.innerHTML = "✓ Response marked as read";
+  messageDiv.appendChild(footer);
+  
+  messages.appendChild(messageDiv);
+}
+
+async function deleteAdminResponse(responseId) {
+  try {
+    await fetch(`/user/response/${responseId}`, { method: 'DELETE' });
+  } catch (error) {
+    console.error('Error deleting admin response:', error);
+  }
+}
+
 async function sendMessage() {
   const text = userInput.value.trim();
 
@@ -1210,41 +1512,44 @@ function addMessage(
 
   messageDiv.appendChild(content);
 
-  if (type === "bot") {
-    // Show confidence score
-    if (
-      confidenceScore !== "" &&
-      confidenceScore !== null &&
-      confidenceScore !== undefined
-    ) {
-      const confidenceDiv = document.createElement("div");
-      confidenceDiv.className = "confidence-box";
+    if (type === "bot") {
+      // Show confidence score
+      if (
+        confidenceScore !== "" &&
+        confidenceScore !== null &&
+        confidenceScore !== undefined
+      ) {
+        const confidenceDiv = document.createElement("div");
+        confidenceDiv.className = "confidence-box";
 
-      const numericConfidence = Number(confidenceScore);
+        const numericConfidence = Number(confidenceScore);
 
-      confidenceDiv.innerHTML = Number.isFinite(numericConfidence)
-        ? `<strong>Confidence:</strong> ${numericConfidence.toFixed(2)}%`
-        : `<strong>Confidence:</strong> ${escapeHtml(confidenceScore)}`;
+        confidenceDiv.innerHTML = Number.isFinite(numericConfidence)
+          ? `<strong>Confidence:</strong> ${numericConfidence.toFixed(2)}%`
+          : `<strong>Confidence:</strong> ${escapeHtml(confidenceScore)}`;
 
-      messageDiv.appendChild(confidenceDiv);
-    }
+        messageDiv.appendChild(confidenceDiv);
+      }
 
-    // Show translation language indicator if not English
-    if (userLanguage && userLanguage.toLowerCase() !== "english") {
-      const langDiv = document.createElement("div");
-      langDiv.className = "language-indicator";
-      langDiv.style.fontSize = "11px";
-      langDiv.style.color = "var(--muted)";
-      langDiv.style.marginTop = "4px";
-      langDiv.innerHTML = `<em>Responded in ${escapeHtml(userLanguage)}</em>`;
-      messageDiv.appendChild(langDiv);
-    }
+      // Show translation language indicator if not English
+      if (userLanguage && userLanguage.toLowerCase() !== "english") {
+        const langDiv = document.createElement("div");
+        langDiv.className = "language-indicator";
+        langDiv.style.fontSize = "11px";
+        langDiv.style.color = "var(--muted)";
+        langDiv.style.marginTop = "4px";
+        langDiv.innerHTML = `<em>Responded in ${escapeHtml(userLanguage)}</em>`;
+        messageDiv.appendChild(langDiv);
+      }
 
-    const feedbackContainer = document.createElement("div");
-    feedbackContainer.className = "feedback-buttons";
+      // Add audio controls for bot response
+      addAudioControls(messageDiv, text, userLanguage || "English");
 
-    if (messageIndex !== null) {
-      feedbackContainer.dataset.index = messageIndex;
+      const feedbackContainer = document.createElement("div");
+      feedbackContainer.className = "feedback-buttons";
+
+      if (messageIndex !== null) {
+        feedbackContainer.dataset.index = messageIndex;
     }
 
     if (
@@ -1425,8 +1730,7 @@ function startVoice() {
 
   if (!recognition) {
     recognition = new SpeechRecognitionAPI();
-    recognition.lang = "en-US";
-
+    
     recognition.onresult = event => {
       userInput.value = event.results[0][0].transcript;
     };
@@ -1436,6 +1740,11 @@ function startVoice() {
       micBtn.classList.remove("mic-listening");
     };
   }
+
+  // Get selected language and set recognition language
+  const languageSelect = document.getElementById("languageSelect");
+  const selectedLanguage = languageSelect.value;
+  recognition.lang = getLanguageCode(selectedLanguage);
 
   listening = !listening;
   micBtn.classList.toggle("mic-listening");

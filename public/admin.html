@@ -480,6 +480,7 @@ body.dark-mode .logout-btn:hover {
         <div id="analytics" class="window active">
             <h1>Model Evaluation</h1>
             <p>Performance metrics and test results</p>
+            <button id="downloadAnalyticsBtn" onclick="downloadAnalyticsReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Analytics (CSV)</button>
 
             <div class="metrics">
                 <div class="card">
@@ -523,6 +524,7 @@ body.dark-mode .logout-btn:hover {
         <!-- Users -->
         <div id="users" class="window">
             <h1>User Management</h1>
+            <button id="downloadUsersBtn" onclick="downloadUsersReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Users (CSV)</button>
             <table>
                 <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Action</th></tr></thead>
                 <tbody id="userTable"></tbody>
@@ -533,6 +535,7 @@ body.dark-mode .logout-btn:hover {
         <div id="kb" class="window">
             <h1>Update Knowledge Base</h1>
             <p class="placeholder">Add, edit, or remove FAQs and responses.</p>
+            <button id="downloadKBBtn" onclick="downloadKnowledgeBaseReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Knowledge Base (CSV)</button>
             
             <div style="margin-bottom: 20px; padding: 15px; background: #d4edff; border-radius: 8px; border-left: 4px solid #0080c0;">
                 <h3 style="margin-top: 0; color: #0080c0;">📚 Add New Policy to Knowledge Base</h3>
@@ -541,23 +544,15 @@ body.dark-mode .logout-btn:hover {
                   <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #0080c0;">Policy Details:</label>
                   <textarea id="kbNewText" style="padding: 10px; width: 100%; min-height: 150px; border: 2px solid #0080c0; border-radius: 6px; font-family: Arial, sans-serif;" placeholder="Enter the policy details as a paragraph..."></textarea>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                  <select id="kbNewLang" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff;">
-                    <option value="en">English</option>
-                    <option value="hi">Hindi</option>
-                  </select>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
                   <button class="btn" onclick="addKB()" style="width: 100%; background: #0080c0;">Add Policy</button>
                 </div>
             </div>
 
             <div style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
                 <h3 style="margin-top: 0;">Search Policies</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                   <input id="kbSearch" class="input" placeholder="Search by keyword..." style="margin-bottom: 0;">
-                  <select id="kbLang" style="margin-bottom: 0;">
-                    <option value="en">English</option>
-                    <option value="hi">Hindi</option>
-                  </select>
                   <button class="btn" onclick="searchKB()" style="width: 100%; margin-bottom: 0;">Search</button>
                 </div>
             </div>
@@ -569,7 +564,38 @@ body.dark-mode .logout-btn:hover {
         <div id="feedback" class="window">
             <h1>Feedback View</h1>
             <p class="placeholder">Review feedback and low-confidence responses.</p>
-            <div id="feedbackReport"></div>
+            <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;">
+      <label for="userFilter" style="font-weight:500;">User:</label>
+      <select id="userFilter" class="input" style="width:auto;">
+        <option value="all">All Users</option>
+      </select>
+      <label for="feedbackFilter" style="font-weight:500;">Feedback:</label>
+      <select id="feedbackFilter" class="input" style="width:auto;">
+        <option value="all">All</option>
+        <option value="yes">Help Full</option>
+        <option value="no">Not Helpfull</option>
+      </select>
+    </div>
+    <button id="downloadFeedbackBtn" onclick="downloadFeedbackReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Report (CSV)</button>
+    
+    <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+      <h3 style="margin-top: 0; color: #2e7d32;">💬 Send Manual Response</h3>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">User Email:</label>
+        <input id="manualUserEmail" type="email" placeholder="Enter user email..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Question:</label>
+        <input id="manualQuestion" type="text" placeholder="User's question..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Your Response:</label>
+        <textarea id="manualResponse" placeholder="Type your response here..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; min-height: 100px; margin-bottom: 10px;"></textarea>
+      </div>
+      <button onclick="sendManualResponse()" style="padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Send Response</button>
+    </div>
+    
+    <div id="feedbackReport"></div>
         </div>
 
     </div>
@@ -578,6 +604,7 @@ body.dark-mode .logout-btn:hover {
 <script>
 
 const CONFIDENCE_THRESHOLD = 0.70;
+let feedbackData = null;
 
 const testData = [
     { q:"OpenAthens account creation?", e:"Library", p:"Library", c:0.92 },
@@ -675,6 +702,87 @@ async function evaluateMetrics() {
         console.error('Error loading metrics:', error);
         document.getElementById("results-body").innerHTML = "<tr><td colspan='5'>Error loading test results</td></tr>";
     }
+}
+
+async function downloadAnalyticsReport() {
+  try {
+    const res = await fetch('/admin/feedback');
+    if (!res.ok) throw new Error('Failed to fetch analytics data');
+    const data = await res.json();
+
+    // Prepare CSV content for metrics
+    let csvContent = "=== ANALYTICS REPORT ===\n";
+    csvContent += `Generated: ${new Date().toISOString()}\n\n`;
+
+    // Add metrics summary
+    if (data.metrics) {
+      csvContent += "=== PERFORMANCE METRICS ===\n";
+      csvContent += `Accuracy,${data.metrics.accuracy || 0}%\n`;
+      csvContent += `Precision,${data.metrics.precision || 0}%\n`;
+      csvContent += `Recall,${data.metrics.recall || 0}%\n`;
+      csvContent += `F1-Score,${data.metrics.f1 || 0}%\n`;
+      csvContent += `Total Feedback,${data.metrics.total || 0}\n`;
+      csvContent += `Helpful (Yes),${data.metrics.yes || 0}\n`;
+      csvContent += `Not Helpful (No),${data.metrics.no || 0}\n\n`;
+    }
+
+    // Add test results table
+    csvContent += "=== TEST RESULTS ===\n";
+    csvContent += "Test Query,Expected,Predicted,Confidence,Status\n";
+
+    if (data.items && data.items.length > 0) {
+      data.items.forEach(d => {
+        const query = (d.user_query || 'N/A').replace(/"/g, '""');
+        const expected = 'yes';
+        let fb = (d.feedback || '').toLowerCase().trim();
+        const predicted = (fb === 'yes') ? 'yes' : 'no';
+        
+        let confStr = d.confidence_score || '0';
+        let conf = parseFloat(confStr);
+        if (conf > 1) { conf = conf / 100; }
+        if (isNaN(conf)) { conf = 0; }
+        
+        const status = (expected === predicted && conf >= 0.70) ? "Pass" : "Fail";
+        
+        csvContent += `"${query}",${expected},${predicted},${(conf*100).toFixed(2)}%,${status}\n`;
+      });
+    }
+
+    // Add feedback details
+    csvContent += "\n=== DETAILED FEEDBACK ===\n";
+    csvContent += "Timestamp,User Query,Chatbot Response,Feedback,User Email,Confidence\n";
+    
+    if (data.items && data.items.length > 0) {
+      data.items.forEach(item => {
+        const timestamp = (item.timestamp || 'N/A').replace(/"/g, '""');
+        const query = (item.user_query || 'N/A').replace(/"/g, '""');
+        const response = (item.chatbot_response || 'N/A').replace(/"/g, '""');
+        const feedback = (item.feedback || 'N/A').replace(/"/g, '""');
+        const email = (item.user_email || 'N/A').replace(/"/g, '""');
+        const confidence = item.confidence_score || '0';
+        
+        csvContent += `"${timestamp}","${query}","${response}","${feedback}","${email}",${confidence}\n`;
+      });
+    }
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `analytics_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('Analytics report downloaded successfully!');
+  } catch (error) {
+    console.error('Error downloading analytics:', error);
+    alert('Failed to download analytics: ' + error.message);
+  }
 }
 
 /* LOAD ADMIN INFO */
@@ -776,16 +884,71 @@ async function deleteUser(email) {
   }
 }
 
+async function downloadUsersReport() {
+  try {
+    const res = await fetch('/admin/users');
+    if (!res.ok) throw new Error('Failed to fetch users');
+    const data = await res.json();
+
+    if (!data.users || data.users.length === 0) {
+      alert('No users available to download');
+      return;
+    }
+
+    // Prepare CSV headers
+    const headers = ['Name', 'Email', 'Mobile', 'Role'];
+    
+    // Prepare CSV rows
+    const rows = data.users.map(u => [
+      (u.name || 'N/A').replace(/"/g, '""'),
+      (u.email || 'N/A').replace(/"/g, '""'),
+      (u.mobile || 'N/A').replace(/"/g, '""'),
+      (u.role || 'N/A').replace(/"/g, '""')
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.map(h => `"${h}"`).join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Add summary at the end
+    const summary = `\n\n=== SUMMARY ===
+Total Users,${data.users.length}
+Students,${data.users.filter(u => u.role === 'student').length}
+Admins,${data.users.filter(u => u.role === 'admin').length}
+Generated,${new Date().toISOString()}`;
+    
+    const finalCsvContent = csvContent + summary;
+
+    // Create blob and download
+    const blob = new Blob([finalCsvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `users_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('Users report downloaded successfully!');
+  } catch (error) {
+    console.error('Error downloading users report:', error);
+    alert('Failed to download users report: ' + error.message);
+  }
+}
+
 /* KB */
 async function searchKB() {
   try {
     const kbSearch = document.getElementById('kbSearch');
-    const kbLang = document.getElementById('kbLang');
     const kbResults = document.getElementById('kbResults');
     
     const q = kbSearch.value || '';
-    const lang = kbLang.value || 'en';
-    const res = await fetch(`/admin/kb?q=${encodeURIComponent(q)}&lang=${lang}`);
+    const res = await fetch(`/admin/kb?q=${encodeURIComponent(q)}&lang=en`);
     if (!res.ok) throw new Error('Failed to fetch KB');
     const data = await res.json();
     kbResults.innerHTML = '';
@@ -803,7 +966,7 @@ async function searchKB() {
         <div class="kb-item" style="border-left: 4px solid #2563eb; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
             <h4 style="margin: 0 0 10px 0; color: #111827;">Policy #${it.id + 1}</h4>
-            <span style="background: #e0e7ff; color: #2563eb; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${lang === 'en' ? 'English' : 'Hindi'}</span>
+            <span style="background: #e0e7ff; color: #2563eb; padding: 4px 8px; border-radius: 4px; font-size: 12px;">English</span>
           </div>
           <div style="background: #f9fafb; padding: 10px; border-radius: 4px; margin-bottom: 10px; max-height: 200px; overflow-y: auto;">
             <p style="margin: 0; font-size: 14px; color: #4b5563; white-space: pre-wrap;">${it.text}</p>
@@ -840,9 +1003,7 @@ function cancelKBEdit(id) {
 
 async function saveKBEdit(id) {
   try {
-    const kbLang = document.getElementById('kbLang');
     const newText = document.getElementById(`edit_text_${id}`).value.trim();
-    const lang = kbLang.value || 'en';
     if (!newText) {
       alert('Please enter policy text');
       return;
@@ -850,7 +1011,7 @@ async function saveKBEdit(id) {
     const res = await fetch(`/admin/kb/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: newText, lang })
+      body: JSON.stringify({ text: newText, lang: 'en' })
     });
     if (!res.ok) throw new Error('Failed to update policy');
     alert('Policy updated successfully!');
@@ -864,9 +1025,7 @@ async function saveKBEdit(id) {
 async function addKB() {
   try {
     const kbNewText = document.getElementById('kbNewText');
-    const kbNewLang = document.getElementById('kbNewLang');
     const text = (kbNewText.value || '').trim();
-    const lang = kbNewLang.value || 'en';
     
     if (!text) {
       alert('Please enter policy details');
@@ -878,7 +1037,7 @@ async function addKB() {
     const res = await fetch('/admin/kb', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: formattedText, lang })
+      body: JSON.stringify({ text: formattedText, lang: 'en' })
     });
     if (!res.ok) throw new Error('Failed to add policy');
     
@@ -894,9 +1053,7 @@ async function addKB() {
 async function deleteKB(id) {
   if (!confirm("Are you sure you want to delete this policy? This action cannot be undone.")) return;
   try {
-    const kbLang = document.getElementById('kbLang');
-    const lang = kbLang.value || 'en';
-    const res = await fetch(`/admin/kb/${id}?lang=${lang}`, { method: 'DELETE' });
+    const res = await fetch(`/admin/kb/${id}?lang=en`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete policy');
     alert('Policy deleted successfully!');
     searchKB();
@@ -906,40 +1063,234 @@ async function deleteKB(id) {
   }
 }
 
+async function downloadKnowledgeBaseReport() {
+  try {
+    const res = await fetch(`/admin/kb?q=&lang=en`);
+    if (!res.ok) throw new Error('Failed to fetch knowledge base');
+    const data = await res.json();
+
+    if (!data.items || data.items.length === 0) {
+      alert('No policies available to download');
+      return;
+    }
+
+    // Prepare CSV headers
+    const headers = ['Policy ID', 'Language', 'Policy Content'];
+    
+    // Prepare CSV rows
+    const rows = data.items.map(item => [
+      item.id + 1,
+      'English',
+      (item.text || 'N/A').replace(/"/g, '""')
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.map(h => `"${h}"`).join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Add summary at the end
+    const summary = `\n\n=== SUMMARY ===
+Total Policies,${data.items.length}
+Language,English
+Generated,${new Date().toISOString()}`;
+    
+    const finalCsvContent = csvContent + summary;
+
+    // Create blob and download
+    const blob = new Blob([finalCsvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `knowledge_base_en_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('Knowledge Base report downloaded successfully!');
+  } catch (error) {
+    console.error('Error downloading knowledge base report:', error);
+    alert('Failed to download knowledge base report: ' + error.message);
+  }
+}
+
 /* FEEDBACK */
 async function loadFeedbackReport() {
   try {
     const res = await fetch('/admin/feedback');
     if (!res.ok) throw new Error('Failed to fetch feedback');
     const data = await res.json();
-    const feedbackReport = document.getElementById('feedbackReport');
-    feedbackReport.innerHTML = '';
-
-    if (!data.items || data.items.length === 0) {
-      feedbackReport.innerHTML = '<p>No feedback available</p>';
-      return;
+    feedbackData = data; // store globally for rendering and filtering
+    // Populate user filter options
+    const userSet = new Set();
+    if (data.items) {
+      data.items.forEach(it => {
+        if (it.user_email) userSet.add(it.user_email);
+      });
     }
-
-    data.items.forEach(it => {
-      let confStr = it.confidence_score || '0';
-      let conf = parseFloat(confStr);
-      if (conf > 1) { conf = conf / 100; }
-      if (isNaN(conf)) { conf = 0; }
-      const confPercent = (conf * 100).toFixed(0);
-
-      feedbackReport.innerHTML += `
-        <div>
-          <strong>${it.user_query || 'N/A'}</strong><br>
-          <small><em>${it.chatbot_response || 'N/A'}</em></small><br>
-          <strong>Feedback:</strong> ${it.feedback || 'N/A'}<br>
-          <small>User: ${it.user_email || 'N/A'} | Confidence: ${confPercent}%</small>
-          <hr>
-        </div>`;
-    });
+    const userFilter = document.getElementById('userFilter');
+    userFilter.innerHTML = '<option value="all">All Users</option>' +
+      [...userSet].map(u => `<option value="${u}">${u}</option>`).join('');
+    // Render feedback cards based on current filters
+    renderFeedbackCards();
   } catch (error) {
     console.error('Error loading feedback:', error);
     const feedbackReport = document.getElementById('feedbackReport');
     feedbackReport.innerHTML = '<p>Error loading feedback</p>';
+  }
+}
+
+function renderFeedbackCards() {
+  const container = document.getElementById('feedbackReport');
+  container.innerHTML = '';
+  if (!feedbackData || !feedbackData.items) {
+    container.innerHTML = '<p>No feedback available</p>';
+    return;
+  }
+  const selectedUser = document.getElementById('userFilter').value;
+  const selectedFeedback = document.getElementById('feedbackFilter').value;
+  const filtered = feedbackData.items.filter(it => {
+    const userMatch = selectedUser === 'all' || it.user_email === selectedUser;
+    const fb = (it.feedback || '').toLowerCase().trim();
+    const feedbackMatch = selectedFeedback === 'all' || fb === selectedFeedback;
+    return userMatch && feedbackMatch;
+  });
+  if (filtered.length === 0) {
+    container.innerHTML = '<p>No feedback matching filters.</p>';
+    return;
+  }
+  filtered.forEach(it => {
+    let confStr = it.confidence_score || '0';
+    let conf = parseFloat(confStr);
+    if (conf > 1) conf = conf / 100;
+    if (isNaN(conf)) conf = 0;
+    const confPercent = (conf * 100).toFixed(0);
+    const fb = (it.feedback || '').toLowerCase().trim();
+    const cardHTML = `
+<div class="card">
+  <h3>${it.user_query || 'N/A'}</h3>
+  <p style="margin:4px 0;"><em>${it.chatbot_response || 'N/A'}</em></p>
+  <p><strong>Feedback:</strong> ${fb}</p>
+  <p><strong>User:</strong> ${it.user_email || 'N/A'}</p>
+  <p><strong>Confidence:</strong> ${confPercent}%</p>
+</div>`;
+    container.innerHTML += cardHTML;
+  });
+}
+
+// Attach filter change listeners
+document.getElementById('userFilter').addEventListener('change', renderFeedbackCards);
+document.getElementById('feedbackFilter').addEventListener('change', renderFeedbackCards);
+
+async function downloadFeedbackReport() {
+  try {
+    const res = await fetch('/admin/feedback');
+    if (!res.ok) throw new Error('Failed to fetch feedback');
+    const data = await res.json();
+
+    if (!data.items || data.items.length === 0) {
+      alert('No feedback available to download');
+      return;
+    }
+
+    // Prepare CSV headers
+    const headers = ['S.No', 'Timestamp', 'User Email', 'User Query', 'Chatbot Response', 'Feedback', 'Confidence Score (%)'];
+    
+    // Prepare CSV rows with formatting
+    const rows = data.items.map((item, index) => {
+      let confStr = item.confidence_score || '0';
+      let conf = parseFloat(confStr);
+      if (conf > 1) { conf = conf / 100; }
+      if (isNaN(conf)) { conf = 0; }
+      const confPercent = (conf * 100).toFixed(2);
+
+      return [
+        (index + 1).toString(),
+        (item.timestamp || 'N/A').replace(/"/g, '""'),
+        (item.user_email || 'N/A').replace(/"/g, '""'),
+        (item.user_query || 'N/A').replace(/"/g, '""'),
+        (item.chatbot_response || 'N/A').replace(/"/g, '""'),
+        (item.feedback || 'N/A').replace(/"/g, '""'),
+        confPercent
+      ];
+    });
+
+    // Create CSV content
+    const csvContent = [
+      headers.map(h => `"${h}"`).join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Add metrics summary at the end
+    if (data.metrics) {
+      const metricsContent = `\n\n=== METRICS SUMMARY ===
+Total Feedback,${data.metrics.total || 0}
+Helpful (Yes),${data.metrics.yes || 0}
+Not Helpful (No),${data.metrics.no || 0}
+Accuracy,${data.metrics.accuracy || 0}%
+Precision,${data.metrics.precision || 0}%
+Recall,${data.metrics.recall || 0}%
+F1 Score,${data.metrics.f1 || 0}%`;
+      csvContent += metricsContent;
+    }
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `feedback_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('Report downloaded successfully!');
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    alert('Failed to download report: ' + error.message);
+  }
+}
+
+async function sendManualResponse() {
+  try {
+    const userEmail = document.getElementById('manualUserEmail').value.trim();
+    const question = document.getElementById('manualQuestion').value.trim();
+    const response = document.getElementById('manualResponse').value.trim();
+    
+    if (!userEmail || !question || !response) {
+      alert('Please fill in all fields');
+      return;
+    }
+    
+    const res = await fetch('/admin/manual-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user_email: userEmail, 
+        question: question,
+        response: response
+      })
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || 'Failed to send response');
+    }
+    
+    alert('Response sent successfully!');
+    document.getElementById('manualUserEmail').value = '';
+    document.getElementById('manualQuestion').value = '';
+    document.getElementById('manualResponse').value = '';
+  } catch (error) {
+    console.error('Error sending manual response:', error);
+    alert('Failed to send response: ' + error.message);
   }
 }
 
