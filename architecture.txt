@@ -1,0 +1,1328 @@
+================================================================================
+                    ACADEMIC CHATBOT SYSTEM ARCHITECTURE
+                              v1.0.0
+================================================================================
+
+TABLE OF CONTENTS
+================================================================================
+1. System Overview
+2. Technology Stack
+3. Directory Structure
+4. Database Schema
+5. User Workflows
+6. Admin Workflows
+7. API Endpoints
+8. Key Features
+9. Data Flow Diagrams
+10. Security Architecture
+11. File Dependencies
+12. Configuration
+
+================================================================================
+1. SYSTEM OVERVIEW
+================================================================================
+
+The Academic Chatbot System is a multilingual conversational AI platform 
+designed for educational institutions. It enables students to ask questions 
+about college policies and receive intelligent responses in their preferred 
+language, with admin capabilities for managing users, knowledge base, and 
+manual responses.
+
+Core Components:
+  • Frontend: Web-based ChatUI (HTML/CSS/JavaScript)
+  • Backend: Flask REST API with JWT authentication
+  • Databases: SQLite (users.db, response.db)
+  • AI/NLP: Logic Response Engine with Translation
+  • Knowledge Base: Plain text policy files
+
+================================================================================
+2. TECHNOLOGY STACK
+================================================================================
+
+FRONTEND:
+  • HTML5, CSS3, JavaScript (Vanilla - No frameworks)
+  • Web Speech API (Native browser speech recognition)
+  • LocalStorage API (Client-side persistence)
+  • Fetch API (HTTP requests)
+
+BACKEND:
+  • Flask 2.x (Python Web Framework)
+  • Flask-CORS (Cross-Origin Resource Sharing)
+  • PyJWT (JSON Web Token authentication)
+  • Werkzeug (Security - password hashing)
+
+DATABASES:
+  • SQLite3 (Built-in Python)
+  • users.db (User management)
+  • response.db (Admin manual responses)
+
+NLP & TRANSLATION:
+  • Custom NLP Logic (logic_response.py)
+  • Translation Engine (translate.py)
+  • Google Translate API
+  • Sentence Transformers (FAISS embeddings)
+  • HuggingFace Models
+
+UTILITIES:
+  • CSV Processing (feedback.csv)
+  • Suggestion Engine (suggestion.py)
+  • Evaluation Module (evaluation.py)
+  • FAISS Indexing (Vector similarity search)
+
+================================================================================
+3. DIRECTORY STRUCTURE
+================================================================================
+
+college_policy.txt              - Knowledge base (English policies)
+college_policy_hi.txt           - Knowledge base (Hindi policies)
+db.py                           - Database abstraction layer
+flask_app.py                    - Main Flask application
+logic_response.py               - NLP processing engine
+translate.py                    - Translation logic
+suggestion.py                   - Suggestion/hint generation
+evaluation.py                   - Feedback evaluation metrics
+create_admin.py                 - Admin user creation script
+create_embedding.py             - Vector embedding generator
+test_translation.py             - Translation testing
+feedback.csv                    - User feedback log
+response.db                     - Admin responses database
+users.db                        - User accounts database
+requirements.txt                - Python dependencies
+README.md                       - Project documentation
+
+/public/
+  ├── ChatUI.html              - Main user chat interface
+  ├── admin.html               - Admin dashboard
+  ├── login.html               - Login page
+  ├── signup.html              - Signup page
+  └── demo/                    - Demo files
+
+/faiss_index/
+  ├── index.faiss              - English embeddings index
+  └── index.pkl                - Index metadata
+
+/faiss_feedback_index/
+  ├── index.faiss              - Feedback embeddings index
+  └── index.pkl                - Feedback metadata
+
+/hf_cache/
+  └── models--sentence-transformers--all-MiniLM-L6-v2/
+      └── Model cache files for embeddings
+
+/__pycache__/                   - Python compiled files
+
+================================================================================
+4. DATABASE SCHEMA
+================================================================================
+
+DATABASE: users.db
+===============================
+
+TABLE: users
+  id              INTEGER PRIMARY KEY AUTOINCREMENT
+  name            TEXT NOT NULL
+  email           TEXT UNIQUE NOT NULL
+  mobile          TEXT
+  password        TEXT NOT NULL (hashed with Werkzeug)
+  role            TEXT DEFAULT 'student' (student, admin)
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+Indexes:
+  • PRIMARY KEY: id
+  • UNIQUE: email
+
+
+DATABASE: response.db
+===============================
+
+TABLE: admin_responses
+  id              INTEGER PRIMARY KEY AUTOINCREMENT
+  user_email      TEXT NOT NULL
+  question        TEXT NOT NULL
+  response        TEXT NOT NULL
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+Indexes:
+  • PRIMARY KEY: id
+  • user_email (for quick user lookups)
+
+
+FILE-BASED: feedback.csv
+===============================
+
+Columns:
+  timestamp           - ISO format timestamp
+  user_query          - Original question from user
+  chatbot_response    - Response provided
+  feedback            - User feedback (Yes/No/Helpful/Not helpful)
+  user_email          - Email of the user who provided feedback
+  confidence_score    - Bot's confidence (0-1)
+
+================================================================================
+5. USER WORKFLOWS
+================================================================================
+
+WORKFLOW 1: NEW USER SIGNUP
+==========================
+
+1. User opens login.html
+2. Clicks "Sign Up" link
+3. Fills form: Name, Email, Mobile, Password
+4. Submits form to POST /signup
+5. Backend validates and creates user in users.db (role: 'student')
+6. User redirected to login page
+7. User logs in with email and password
+
+Data Flow:
+  Signup Form → POST /signup → db.create_user() → users.db
+              → JSON response (success/error)
+
+
+WORKFLOW 2: STUDENT LOGIN AND CHAT
+===================================
+
+1. User opens login.html
+2. Enters email and password
+3. Clicks Login button → POST /login
+4. Backend verifies credentials
+5. If valid:
+   a. Generate JWT token (expires in 2 hours)
+   b. Set secure HTTP-only cookie
+   c. Return redirect_url: "/chat"
+   d. Return user info (name, email, role)
+6. Frontend redirects to /chat → ChatUI.html
+7. On page load:
+   a. Extract user info from response
+   b. Load admin responses from backend (GET /user/responses)
+   c. Save admin responses to localStorage
+   d. Load chat history from localStorage
+   e. Display welcome message
+
+Data Flow:
+  Login Form → POST /login → JWT generation → Set Cookie
+            → Redirect to ChatUI.html
+            → GET /user/responses → Save to localStorage
+            → Render messages from localStorage
+
+
+WORKFLOW 3: SEND MESSAGE AND GET RESPONSE
+==========================================
+
+1. User types message (or uses voice)
+2. Selects language (English, Hindi, Tamil, etc.)
+3. Clicks Send or presses Enter
+4. Frontend:
+   a. Add user message to chat UI
+   b. Show typing indicator
+   c. Show "Translating..." status
+   d. Save message to localStorage
+5. Send POST /chat with:
+   - message: user's text
+   - language: selected language
+6. Backend processes:
+   a. Translate message to English (if not English)
+   b. Pass to NLP engine (nlpcall)
+   c. Get confidence score and response
+   d. Get suggestion/hint
+   e. Translate response back to user's language
+   f. Return all data
+7. Frontend receives response:
+   a. Hide typing indicator
+   b. Display bot response with:
+      - Confidence score badge
+      - Play button (audio playback)
+      - Feedback buttons (Yes/No)
+   c. Save response to localStorage
+8. User can:
+   a. Click Play button → Hear response in selected language
+   b. Submit feedback → POST /feedback
+   c. Continue chatting
+
+Data Flow:
+  User Input → Save to localStorage
+            → POST /chat (message, language)
+            → NLP Processing
+            → Translation (EN ↔ User Language)
+            → Response + Confidence + Hint
+            → Display in ChatUI
+            → Play Audio (Web Speech API)
+            → Submit Feedback
+
+
+WORKFLOW 4: AUDIO PLAYBACK
+===========================
+
+1. Response is displayed with Play button (🔊)
+2. User clicks Play button
+3. JavaScript extracts response text
+4. Cleans text (removes HTML, formatting)
+5. Gets language code from getLanguageCode(language)
+6. Creates SpeechSynthesisUtterance:
+   - text: cleaned response text
+   - lang: language code (e.g., "hi-IN" for Hindi)
+   - rate: 1.0 (normal speed)
+   - pitch: 1.0 (normal pitch)
+7. Speaks text using Web Speech API
+8. User can click Stop button to halt playback
+
+Supported Languages:
+  English   → en-US
+  Hindi     → hi-IN
+  Tamil     → ta-IN
+  Telugu    → te-IN
+  Kannada   → kn-IN
+  Malayalam → ml-IN
+  Marathi   → mr-IN
+  Gujarati  → gu-IN
+  Bengali   → bn-IN
+  Punjabi   → pa-IN
+
+
+WORKFLOW 5: SUBMIT FEEDBACK
+============================
+
+1. After bot response, user sees feedback buttons
+2. User clicks "Helpful" or "Not Helpful"
+3. Frontend sends POST /feedback with:
+   - user_query: original question
+   - bot_response: chatbot's answer
+   - feedback: "Yes"/"No" or "Helpful"/"Not helpful"
+   - confidence_score: bot's confidence value
+   - user_email: from JWT token
+4. Backend appends to feedback.csv
+5. Frontend:
+   a. Disables feedback buttons
+   b. Shows "Feedback saved" message
+   c. Saves feedback state to localStorage
+
+Data Flow:
+  User Feedback → POST /feedback → Append to feedback.csv
+              → Return success message
+              → Update localStorage
+
+
+WORKFLOW 6: VOICE INPUT WITH MICROPHONE
+========================================
+
+1. User clicks Mic button
+2. Selects language from dropdown
+3. Clicks Mic again to start listening
+4. Frontend:
+   a. Gets selected language code (e.g., "hi-IN" for Hindi)
+   b. Creates SpeechRecognition object
+   c. Sets recognition.lang to selected language
+   d. Calls recognition.start()
+   e. Browser requests microphone permission
+5. User speaks in selected language
+6. Browser recognizes speech in that language
+7. Recognized text fills the text input box
+8. User can edit or send the message
+9. Rest of the workflow follows normal send message flow
+
+Data Flow:
+  Language Selection → Mic Click
+                   → SpeechRecognition API (user language)
+                   → Browser recognizes speech
+                   → Text appears in input box
+                   → User sends message
+                   → Normal chat flow continues
+
+
+WORKFLOW 7: CHAT HISTORY MANAGEMENT
+====================================
+
+1. All messages are saved to localStorage with structure:
+   {
+     text: "message content",
+     type: "user" or "bot",
+     userQuery: "original question" (for bot responses),
+     feedbackSubmitted: true/false,
+     confidenceScore: 0.95,
+     timestamp: "2026-05-17T10:30:00"
+   }
+
+2. Admin responses stored separately:
+   {
+     text: "admin response",
+     type: "admin-response",
+     question: "user's question",
+     isAdminResponse: true,
+     timestamp: "2026-05-17T10:35:00"
+   }
+
+3. localStorage key: "chat_" + timestamp (per chat session)
+
+4. On page load, loadMessages() renders all stored messages
+
+5. User can reset chat:
+   - Click "Reset Chat" in sidebar
+   - Clears localStorage for current chat
+   - Starts fresh conversation
+
+6. Chat history displayed in right panel:
+   - Shows previous chat sessions
+   - Click to load old conversations
+   - Deletes permanently (no recovery)
+
+================================================================================
+6. ADMIN WORKFLOWS
+================================================================================
+
+WORKFLOW 1: ADMIN LOGIN
+=======================
+
+1. Admin user account created via create_admin.py script
+2. Admin opens login.html
+3. Enters email and password (admin credentials)
+4. Backend verifies and checks role = "admin"
+5. If valid:
+   a. Generate JWT token with role: "admin"
+   b. Return redirect_url: "/admin"
+6. Frontend redirects to /admin → admin.html
+7. Admin dashboard loads with sections:
+   - User Management
+   - Analytics & Feedback
+   - Knowledge Base Management
+   - Manual Responses
+
+Data Flow:
+  Admin Login → POST /login (verify role)
+           → JWT with admin role
+           → Redirect to admin.html
+           → Load admin dashboard
+
+
+WORKFLOW 2: USER MANAGEMENT
+============================
+
+1. Admin clicks "User Management" tab
+2. Frontend calls GET /admin/users (requires JWT + admin role)
+3. Backend returns all users from users.db:
+   - id, name, email, mobile, role
+4. Frontend displays table with users
+5. Admin can:
+   a. Change role: Click user → Select new role → PUT /admin/users/role
+   b. Delete user: Click delete icon → DELETE /admin/users/delete
+6. Backend validates:
+   - JWT token is admin
+   - Requested email exists
+   - Updates/deletes appropriately
+
+Data Flow:
+  Admin clicks "Users" → GET /admin/users
+                      → Fetch from users.db
+                      → Display in table
+                      → Change role/delete → PUT/DELETE endpoints
+                      → Update database
+
+
+WORKFLOW 3: KNOWLEDGE BASE MANAGEMENT
+======================================
+
+1. Admin clicks "Knowledge Base" tab
+2. Frontend calls GET /admin/kb?lang=en (English only)
+3. Backend reads college_policy.txt
+4. Parses content into items (split by \n\n)
+5. Frontend displays list of policies
+6. Admin can:
+   a. Search policies: Type in search box → Filter displayed items
+   b. Add policy: Click "Add" → Textarea → POST /admin/kb
+   c. Edit policy: Click item → Edit text → PUT /admin/kb/<id>
+   d. Delete policy: Click delete → DELETE /admin/kb/<id>
+
+Data Flow:
+  Admin clicks KB → GET /admin/kb?lang=en
+               → Parse college_policy.txt
+               → Display items
+               → Search/Add/Edit/Delete
+               → Modify college_policy.txt
+               → Return success
+
+
+WORKFLOW 4: FEEDBACK & ANALYTICS
+=================================
+
+1. Admin clicks "Analytics & Feedback" tab
+2. Frontend calls GET /admin/feedback
+3. Backend:
+   a. Reads feedback.csv
+   b. Calculates metrics from evaluation.py:
+      - Total feedback count
+      - Yes/No distribution
+      - Accuracy, Precision, Recall, F1 score
+4. Frontend displays:
+   a. Metrics section (percentages)
+   b. Feedback table (timestamp, query, response, feedback, confidence)
+5. Admin can download report: Click "Download Feedback Report" → CSV file
+
+Data Flow:
+  Admin clicks Analytics → GET /admin/feedback
+                       → Read feedback.csv
+                       → Calculate metrics
+                       → Parse evaluation results
+                       → Display dashboard
+                       → Download CSV report
+
+
+WORKFLOW 5: MANUAL ADMIN RESPONSE
+==================================
+
+1. Admin clicks "Manual Responses" section
+2. Admin fills form with:
+   - User Email: student's email
+   - Question: student's question
+   - Response: admin's answer (textarea)
+3. Admin clicks "Send Response"
+4. Frontend validates:
+   - All fields filled
+   - Valid email format
+5. Frontend sends POST /admin/manual-response:
+   {
+     user_email: "student@college.edu",
+     question: "What is the late fee?",
+     response: "The late fee is Rs. 500 per day..."
+   }
+6. Backend (admin_required):
+   a. Validates user_email, question, response
+   b. Calls db.save_manual_response()
+   c. Inserts into response.db admin_responses table
+   d. Returns success
+7. Frontend shows success message
+
+Data Flow:
+  Admin fills form → POST /admin/manual-response
+               → Validate (admin_required)
+               → db.save_manual_response()
+               → Insert into response.db
+               → Return success
+               → Form clears
+
+
+WORKFLOW 6: USER RECEIVES ADMIN RESPONSE
+=========================================
+
+1. Admin sends response (see Workflow 5)
+2. Response stored in response.db
+3. User logs in to chat (see User Workflow 2)
+4. On page load, frontend calls GET /user/responses
+5. Backend:
+   a. Gets all responses where user_email matches
+   b. Ordered by created_at (newest first)
+   c. Returns array of responses
+6. Frontend:
+   a. For each response, calls saveAdminResponseMessage()
+   b. Saves to localStorage with type: "admin-response"
+   c. Adds to chat display with green admin badge
+   d. Shows question and response in formatted box
+   e. Shows timestamp
+   f. After saving, calls DELETE /user/response/<id>
+7. Response deleted from backend (no duplicates)
+8. On page refresh, response loads from localStorage
+
+Data Flow:
+  User logs in → GET /user/responses
+            → Fetch from response.db
+            → Save to localStorage
+            → Display in chat (green badge)
+            → DELETE /user/response/<id>
+            → On refresh: Load from localStorage
+
+
+WORKFLOW 7: DOWNLOAD REPORTS
+=============================
+
+1. Admin clicks "Download [Type] Report" button
+2. Options:
+   a. Download Users Report
+   b. Download Analytics Report
+   c. Download Feedback Report
+   d. Download Knowledge Base Report
+
+3. Download Users Report:
+   - Generates CSV with all users
+   - Columns: ID, Name, Email, Mobile, Role
+   - Includes summary: Total users, by role
+
+4. Download Analytics Report:
+   - Generates CSV with metrics
+   - Columns: Metric, Value
+   - Includes: Accuracy, Precision, Recall, F1, Total feedback
+
+5. Download Feedback Report:
+   - Generates CSV from feedback.csv
+   - Columns: S.No, Timestamp, Email, Query, Response, Feedback, Confidence
+
+6. Download KB Report:
+   - Generates CSV of all policies
+   - Columns: Item ID, Policy Text
+   - Only English (lang=en)
+
+7. Browser downloads CSV file with timestamp
+
+Data Flow:
+  Admin clicks Download → Generate CSV data
+                      → Set headers (Content-Type: text/csv)
+                      → Browser downloads file
+
+
+================================================================================
+7. API ENDPOINTS
+================================================================================
+
+AUTHENTICATION ENDPOINTS
+========================
+
+POST /signup
+  Description: Create new user account
+  Auth: None (public)
+  Request Body:
+    {
+      "name": "John Doe",
+      "email": "john@college.edu",
+      "mobile": "9876543210",
+      "password": "securepass123"
+    }
+  Response: 201 (success), 400 (validation error), 400 (email exists)
+  Database: users.db (insert into users table)
+
+POST /login
+  Description: Authenticate user and return JWT
+  Auth: None (public)
+  Request Body:
+    {
+      "email": "john@college.edu",
+      "password": "securepass123"
+    }
+  Response: 200 with JWT token in cookie
+  Response Body:
+    {
+      "message": "Login successful",
+      "redirect_url": "/chat" or "/admin",
+      "user": { "name", "email", "role" }
+    }
+
+POST /logout
+  Description: Invalidate JWT token
+  Auth: Required (JWT cookie)
+  Response: 200 (clears access_token cookie)
+
+
+USER ENDPOINTS
+==============
+
+GET /me
+  Description: Get current logged-in user info
+  Auth: Required (JWT)
+  Response: 200
+    {
+      "name": "John Doe",
+      "email": "john@college.edu",
+      "role": "student"
+    }
+
+POST /chat
+  Description: Send message and get chatbot response
+  Auth: Required (JWT)
+  Request Body:
+    {
+      "message": "What is the admission fee?",
+      "language": "English"
+    }
+  Response: 200
+    {
+      "response": ["The admission fee is Rs. 50,000"],
+      "confidence": 0.95,
+      "confidence_score": 0.95,
+      "hint": "Check the admissions section",
+      "user": "student@college.edu",
+      "user_language": "English",
+      "detected_language": "English"
+    }
+  Processing:
+    - Translate to English (if needed)
+    - NLP processing (nlpcall)
+    - Get confidence score
+    - Get suggestion/hint
+    - Translate back to user language
+
+POST /feedback
+  Description: Submit user feedback on bot response
+  Auth: Required (JWT)
+  Request Body:
+    {
+      "user_query": "What is the admission fee?",
+      "bot_response": "The admission fee is Rs. 50,000",
+      "feedback": "Yes",
+      "confidence_score": 0.95,
+      "is_helpful": true
+    }
+  Response: 200
+  Action: Append to feedback.csv
+
+GET /user/responses
+  Description: Get all admin manual responses for logged-in user
+  Auth: Required (JWT)
+  Response: 200
+    {
+      "responses": [
+        {
+          "id": 1,
+          "user_email": "student@college.edu",
+          "question": "What is the late fee?",
+          "response": "The late fee is Rs. 500 per day",
+          "created_at": "2026-05-17T10:30:00"
+        }
+      ]
+    }
+  Processing:
+    - Fetch from response.db where user_email matches
+    - Order by created_at DESC
+
+DELETE /user/response/<response_id>
+  Description: Delete a response after user saves it
+  Auth: Required (JWT)
+  Security: Verifies user_email matches
+  Response: 200 (deleted), 404 (not found)
+  Action: Remove from response.db
+
+
+ADMIN ENDPOINTS (require @jwt_required + @admin_required)
+=======================
+
+GET /admin/users
+  Description: List all users
+  Response: 200
+    {
+      "users": [
+        {
+          "id": 1,
+          "name": "John Doe",
+          "email": "john@college.edu",
+          "mobile": "9876543210",
+          "role": "student"
+        }
+      ]
+    }
+
+PUT /admin/users/role
+  Description: Change user role
+  Request Body:
+    {
+      "email": "john@college.edu",
+      "role": "admin"
+    }
+  Response: 200
+    {
+      "message": "User role updated successfully",
+      "email": "john@college.edu",
+      "new_role": "admin"
+    }
+
+DELETE /admin/users/delete
+  Description: Delete user account
+  Request Body:
+    {
+      "email": "john@college.edu"
+    }
+  Response: 200
+
+GET /admin/kb?lang=en
+  Description: List knowledge base items
+  Query Params:
+    - lang: "en" or "hi" (default: "en")
+    - q: search query (optional)
+  Response: 200
+    {
+      "items": [
+        {
+          "id": 0,
+          "text": "Admission Fee: Rs. 50,000"
+        }
+      ]
+    }
+
+POST /admin/kb
+  Description: Add new KB item
+  Request Body:
+    {
+      "text": "Late fee: Rs. 500 per day",
+      "lang": "en"
+    }
+  Response: 201
+
+PUT /admin/kb/<item_id>
+  Description: Update KB item
+  Request Body:
+    {
+      "text": "Late fee: Rs. 600 per day",
+      "lang": "en"
+    }
+  Response: 200
+
+DELETE /admin/kb/<item_id>?lang=en
+  Description: Delete KB item
+  Response: 200
+
+GET /admin/feedback
+  Description: Get feedback and analytics metrics
+  Response: 200
+    {
+      "items": [
+        {
+          "timestamp": "2026-05-17T10:30:00",
+          "user_query": "What is the admission fee?",
+          "chatbot_response": "Rs. 50,000",
+          "feedback": "Yes",
+          "user_email": "student@college.edu",
+          "confidence_score": 0.95
+        }
+      ],
+      "metrics": {
+        "total": 100,
+        "yes": 85,
+        "no": 15,
+        "accuracy": 92.5,
+        "precision": 89.3,
+        "recall": 87.6,
+        "f1": 88.4
+      }
+    }
+
+POST /admin/manual-response
+  Description: Admin sends manual response to user
+  Request Body:
+    {
+      "user_email": "student@college.edu",
+      "question": "What is the late fee?",
+      "response": "The late fee is Rs. 500 per day for each day late"
+    }
+  Response: 201
+    {
+      "message": "Response saved successfully"
+    }
+  Action: Insert into response.db admin_responses table
+
+
+STATIC PAGES
+============
+
+GET /
+  Redirects to /login
+
+GET /login
+  Serves login.html
+
+GET /signup
+  Redirects to login (signup form in login.html)
+
+GET /chat
+  Auth: Required (JWT)
+  Serves ChatUI.html
+
+GET /admin
+  Auth: Required (JWT + admin role)
+  Serves admin.html
+
+GET /public/<filename>
+  Serves files from public directory
+
+================================================================================
+8. KEY FEATURES
+================================================================================
+
+✓ MULTILINGUAL SUPPORT
+  - Supports 10 languages: English, Hindi, Tamil, Telugu, Kannada,
+    Malayalam, Marathi, Gujarati, Bengali, Punjabi
+  - Dynamic translation (User Language ↔ English ↔ NLP ↔ User Language)
+  - Speech recognition in user's language
+  - Text-to-speech playback in user's language
+
+✓ VOICE INPUT/OUTPUT
+  - Browser-based speech recognition (Web Speech API)
+  - Natural language speech synthesis
+  - No external audio service required
+  - Works offline after initial page load
+
+✓ INTELLIGENT RESPONSES
+  - NLP-based question understanding
+  - Confidence scoring (0-1 scale)
+  - Suggestion/hint generation
+  - Context-aware responses
+
+✓ USER FEEDBACK SYSTEM
+  - Collect feedback on bot responses
+  - Track helpful vs. not helpful
+  - Store confidence scores
+  - Analytics and metrics calculation
+
+✓ ADMIN MANUAL RESPONSES
+  - Admin can send direct responses to specific users
+  - Responses persist across sessions
+  - Stored in separate database
+  - Auto-delete after user retrieval (prevents duplicates)
+  - Display with green "Admin Response" badge
+
+✓ KNOWLEDGE BASE MANAGEMENT
+  - Admin can add, edit, delete policies
+  - Search functionality
+  - English-only (simplified interface)
+  - Plain text storage
+
+✓ USER MANAGEMENT
+  - Create student and admin accounts
+  - Change user roles dynamically
+  - Delete users
+  - Track user information
+
+✓ ANALYTICS & REPORTING
+  - Download user reports (CSV)
+  - Download analytics/metrics (CSV)
+  - Download feedback reports (CSV)
+  - Download knowledge base (CSV)
+  - Evaluation metrics: Accuracy, Precision, Recall, F1
+
+✓ SECURITY
+  - JWT token authentication
+  - Role-based access control (RBAC)
+  - Secure password hashing (Werkzeug)
+  - HTTP-only cookies
+  - CORS protection
+  - Email validation on delete operations
+
+✓ PERSISTENT STORAGE
+  - LocalStorage for chat history
+  - SQLite databases for persistence
+  - Automatic saving of messages
+  - Recovery on page refresh
+
+✓ RESPONSIVE UI
+  - Collapsible sidebar and history panels
+  - Draggable panel resizing
+  - Dark/Light theme toggle
+  - Mobile-friendly design
+  - Smooth animations and transitions
+
+================================================================================
+9. DATA FLOW DIAGRAMS
+================================================================================
+
+DIAGRAM 1: MESSAGE PROCESSING FLOW
+===================================
+
+User Types Message
+       ↓
+Select Language
+       ↓
+Click Send
+       ↓
+JavaScript saves to localStorage
+       ↓
+POST /chat (message, language)
+       ↓
+Backend: Translate to English (if needed)
+       ↓
+NLP Processing (nlpcall)
+       ↓
+Get Response + Confidence Score
+       ↓
+Get Suggestion/Hint
+       ↓
+Translate Response to User Language (if needed)
+       ↓
+Return JSON Response
+       ↓
+Frontend: Display Bot Response
+       ↓
+Save to localStorage
+       ↓
+Add Play Button, Feedback Buttons
+       ↓
+User can:
+  • Click Play → Hear audio in their language
+  • Submit Feedback → POST /feedback
+  • Continue chatting
+
+
+DIAGRAM 2: ADMIN RESPONSE DELIVERY FLOW
+========================================
+
+Admin sends response via form
+       ↓
+POST /admin/manual-response
+       ↓
+Backend: Validate (admin_required)
+       ↓
+Save to response.db
+       ↓
+User logs in
+       ↓
+Page load triggers GET /user/responses
+       ↓
+Backend: Query response.db (WHERE user_email = ?)
+       ↓
+Return admin responses
+       ↓
+Frontend: saveAdminResponseMessage() → localStorage
+       ↓
+Display in chat with green badge
+       ↓
+DELETE /user/response/<id> → Remove from DB
+       ↓
+On page refresh: Load from localStorage
+       ↓
+Response persists across sessions
+
+
+DIAGRAM 3: AUTHENTICATION FLOW
+===============================
+
+User Credentials
+       ↓
+POST /login
+       ↓
+Backend: Verify email and password
+       ↓
+Check user role (student or admin)
+       ↓
+Generate JWT token (expires in 2 hours)
+       ↓
+Set HTTP-only secure cookie
+       ↓
+Return redirect URL (/chat or /admin)
+       ↓
+Frontend: Redirect to appropriate page
+       ↓
+Page loads with protected routes
+       ↓
+@jwt_required decorator checks token
+       ↓
+Request user info from /me
+       ↓
+Display user dashboard
+
+
+DIAGRAM 4: KNOWLEDGE BASE UPDATE FLOW
+======================================
+
+Admin adds/edits/deletes policy
+       ↓
+Frontend validation
+       ↓
+POST/PUT/DELETE /admin/kb/<id>
+       ↓
+Backend: Verify admin role
+       ↓
+Read college_policy.txt
+       ↓
+Parse into items (split by \n\n)
+       ↓
+Apply change (add/update/delete)
+       ↓
+Write back to college_policy.txt
+       ↓
+Return success response
+       ↓
+Frontend: Update UI
+       ↓
+Next user queries use updated KB
+
+
+DIAGRAM 5: SPEECH RECOGNITION FLOW
+===================================
+
+User selects language from dropdown
+       ↓
+Clicks Mic button
+       ↓
+JavaScript: Get language code (e.g., "hi-IN" for Hindi)
+       ↓
+Create SpeechRecognition object
+       ↓
+Set recognition.lang = language code
+       ↓
+Call recognition.start()
+       ↓
+Browser: Request microphone permission
+       ↓
+User speaks in selected language
+       ↓
+Browser recognizes speech in that language
+       ↓
+Recognized text returned to input field
+       ↓
+User can edit and send message
+
+
+================================================================================
+10. SECURITY ARCHITECTURE
+================================================================================
+
+AUTHENTICATION
+==============
+• JWT (JSON Web Tokens)
+  - Generated on login
+  - Expires after 2 hours (configurable)
+  - Stored in HTTP-only secure cookie
+  - Checked on every protected endpoint
+
+• Password Security
+  - Hashed with Werkzeug (SHA-256 + salt)
+  - Never stored in plain text
+  - Verified on login with check_password_hash()
+
+• Token Validation
+  - Signature verified with SECRET_KEY
+  - Expiration checked
+  - Invalid tokens rejected
+
+
+AUTHORIZATION
+==============
+• Role-Based Access Control (RBAC)
+  - student: Can chat, submit feedback, view own responses
+  - admin: Can manage users, KB, view analytics, send responses
+
+• Decorators
+  - @jwt_required: Validates JWT token
+  - @admin_required: Validates admin role (after jwt_required)
+
+• Resource Ownership
+  - Users can only view/delete their own responses
+  - DELETE /user/response/<id> verifies user_email matches
+
+
+CROSS-SITE ATTACKS
+==================
+• CORS Protection
+  - Flask-CORS configured with credentials support
+  - Specific origin policies can be set
+  - Prevents unauthorized cross-origin requests
+
+• CSRF Protection
+  - HTTP-only cookies prevent JavaScript access
+  - POST requests validated via JWT
+  - No form-based CSRF (API-driven)
+
+
+DATA PROTECTION
+===============
+• HTTPS Recommended (not enforced in dev)
+  - Enable secure=True on cookies in production
+  - Use HTTPS only in production
+
+• Input Validation
+  - Email format validation
+  - Required field validation
+  - Type checking on all inputs
+
+• SQL Injection Prevention
+  - Parameterized queries via sqlite3
+  - No string concatenation in queries
+
+
+SECRETS MANAGEMENT
+==================
+• SECRET_KEY
+  - Used to sign JWT tokens
+  - Should be strong random string
+  - Keep in environment variables (production)
+
+• Database Credentials
+  - SQLite (embedded, no credentials)
+  - Consider external DB in production with credentials
+
+
+================================================================================
+11. FILE DEPENDENCIES
+================================================================================
+
+flask_app.py DEPENDS ON:
+  └── db.py
+  ├── logic_response.py
+  ├── translate.py
+  ├── suggestion.py
+  ├── evaluation.py
+  ├── public/ChatUI.html
+  ├── public/admin.html
+  ├── public/login.html
+  ├── users.db
+  ├── response.db
+  ├── feedback.csv
+  ├── college_policy.txt
+  └── college_policy_hi.txt
+
+ChatUI.html DEPENDS ON:
+  ├── flask_app.py (API endpoints)
+  ├── localStorage (browser API)
+  └── Web Speech API (browser API)
+
+admin.html DEPENDS ON:
+  ├── flask_app.py (API endpoints)
+  └── localStorage (browser API)
+
+db.py DEPENDS ON:
+  └── sqlite3 (Python module)
+
+logic_response.py DEPENDS ON:
+  ├── FAISS index files
+  ├── Sentence transformers model
+  └── Custom embeddings
+
+translate.py DEPENDS ON:
+  └── Google Translate API (or alternative)
+
+evaluation.py DEPENDS ON:
+  └── feedback.csv
+
+suggestion.py DEPENDS ON:
+  └── Custom logic
+
+create_admin.py DEPENDS ON:
+  └── db.py
+
+create_embedding.py DEPENDS ON:
+  ├── logic_response.py
+  └── Sentence transformers model
+
+test_translation.py DEPENDS ON:
+  └── translate.py
+
+
+================================================================================
+12. CONFIGURATION
+================================================================================
+
+Flask Configuration (flask_app.py)
+===================================
+app.config["SECRET_KEY"] = "swastik"
+  - Used for JWT signing
+  - Should be changed to strong random value in production
+
+app.config["JWT_EXPIRY_HOURS"] = 2
+  - JWT token expiration time
+  - User will be logged out after this duration
+
+CORS Settings
+=============
+CORS(app, supports_credentials=True)
+  - Allows cross-origin requests with credentials
+  - Set specific origin in production
+
+Database Configuration
+======================
+SQLite3 (embedded)
+  - users.db: User accounts
+  - response.db: Admin responses
+  - No external DB required for development
+
+Knowledge Base Files
+====================
+college_policy.txt
+  - English policies
+  - Format: Items separated by \n\n
+  - Edited via admin.html
+
+college_policy_hi.txt
+  - Hindi policies (if available)
+  - Currently not used (English-only KB)
+
+Vector Index Configuration
+==========================
+/faiss_index/
+  - Stores embeddings for English policies
+  - Generated by create_embedding.py
+  - Used for similarity search
+
+/faiss_feedback_index/
+  - Stores feedback embeddings
+  - Used for feedback analysis
+
+
+SUPPORTED LANGUAGES
+====================
+1. English     (en, en-US)
+2. Hindi       (hi, hi-IN)
+3. Tamil       (ta, ta-IN)
+4. Telugu      (te, te-IN)
+5. Kannada     (kn, kn-IN)
+6. Malayalam   (ml, ml-IN)
+7. Marathi     (mr, mr-IN)
+8. Gujarati    (gu, gu-IN)
+9. Bengali     (bn, bn-IN)
+10. Punjabi    (pa, pa-IN)
+
+Add more languages by:
+  1. Update language options in ChatUI.html
+  2. Add language code mapping in getLanguageCode()
+  3. Test translation and speech recognition
+
+
+ENVIRONMENT SETUP
+==================
+Required Python Packages (requirements.txt):
+  - Flask
+  - Flask-CORS
+  - PyJWT
+  - Werkzeug
+  - sentence-transformers
+  - faiss-cpu (or faiss-gpu)
+  - google-cloud-translate (or alternative)
+  - And others...
+
+Installation:
+  pip install -r requirements.txt
+
+Initialize Databases:
+  python create_admin.py          # Create admin user
+  python create_embedding.py      # Generate FAISS indexes
+  python test_translation.py      # Test translation
+
+
+RUNNING THE APPLICATION
+========================
+1. Start Flask server:
+   python flask_app.py
+
+2. Access application:
+   http://localhost:5000
+
+3. Login:
+   - Student: Use signup credentials
+   - Admin: Use admin credentials from create_admin.py
+
+4. Enable debug mode:
+   app.run(debug=True)
+
+
+================================================================================
+TROUBLESHOOTING GUIDE
+================================================================================
+
+Issue: "Authentication required" on protected routes
+Fix: Ensure JWT token is in cookie, not expired
+
+Issue: Speech recognition not working
+Fix: Check browser permissions, ensure HTTPS (some browsers require it)
+
+Issue: Responses in English instead of selected language
+Fix: Check translate.py is working, verify language code in getLanguageCode()
+
+Issue: Admin responses disappearing on page refresh
+Fix: Ensure localStorage is working, check browser storage quota
+
+Issue: KB changes not appearing
+Fix: Clear browser cache, ensure college_policy.txt is updated
+
+Issue: Feedback not saving
+Fix: Check feedback.csv exists and has write permissions
+
+
+================================================================================
+END OF ARCHITECTURE DOCUMENTATION
+================================================================================
+
+For more information, see:
+- README.md (Project overview)
+- Individual Python files (Source code)
+- flask_app.py (Full API implementation)
+- public/ChatUI.html (Frontend implementation)

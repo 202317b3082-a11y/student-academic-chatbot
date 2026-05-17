@@ -154,7 +154,128 @@ def translate_to_english(text: str, source_lang: str = "auto") -> dict:
         }
 
 
-def translate_from_english(text: str, target_lang: str) -> dict:
+def translate_from_english(content: any, target_lang: str) -> dict:
+    """
+    Translate English content to the target language.
+    Supports:
+    - Plain string input (original behavior).
+    - Dictionary input containing a 'response' key (list or string) typically returned from the NLP call.
+    The function preserves the original structure and returns a dictionary matching the original format,
+    adding or replacing the translated text under the 'translated_text' key.
+    """
+    # Helper to perform actual translation via SarvamAI client
+    def _translate_text(text: str) -> str:
+        try:
+            resp = client.text.translate(
+                input=text.strip(),
+                source_language_code="en-IN",
+                target_language_code=get_language_code(target_lang),
+                speaker_gender="Male",
+                mode="formal",
+                model="mayura:v1",
+                numerals_format="native",
+            )
+            return extract_translated_text(resp)
+        except Exception as e:
+            # Propagate error message for higher-level handling
+            raise RuntimeError(f"Translation error: {str(e)}")
+
+    # Case 1: content is a string – keep original simple behavior
+    if isinstance(content, str):
+        if not content or not content.strip():
+            return {
+                "success": False,
+                "translated_text": content,
+                "source_language": "English",
+                "target_language": target_lang,
+                "error": "Empty text cannot be translated",
+            }
+        try:
+            translated = _translate_text(content)
+            if not translated:
+                return {
+                    "success": False,
+                    "translated_text": content,
+                    "source_language": "English",
+                    "target_language": target_lang,
+                    "error": "No translation returned from API",
+                }
+            return {
+                "success": True,
+                "translated_text": translated,
+                "source_language": "English",
+                "target_language": target_lang,
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "translated_text": content,
+                "source_language": "English",
+                "target_language": target_lang,
+                "error": f"Translation error: {str(e)}",
+            }
+
+    # Case 2: content is a dict (expected format from nlpcall)
+    if isinstance(content, dict):
+        # Preserve original fields (e.g., confidence) in the result
+        result = dict(content)
+        response = content.get("response")
+        if response is None:
+            # Nothing to translate; return original dict unchanged but indicate failure
+            result.update({
+                "success": False,
+                "error": "No 'response' field to translate",
+                "source_language": "English",
+                "target_language": target_lang,
+            })
+            return result
+        # Normalise response to a string for translation
+        if isinstance(response, list):
+            # Join list items with newline to keep separations after translation
+            response_text = "\n".join(map(str, response))
+        else:
+            response_text = str(response)
+        try:
+            translated_text = _translate_text(response_text)
+            if not translated_text:
+                result.update({
+                    "success": False,
+                    "error": "No translation returned from API",
+                    "source_language": "English",
+                    "target_language": target_lang,
+                })
+                return result
+            # If original response was a list, split back on newline to preserve list shape
+            if isinstance(response, list):
+                translated_list = translated_text.split("\n")
+                result["response"] = translated_list
+            else:
+                result["response"] = translated_text
+            result.update({
+                "success": True,
+                "source_language": "English",
+                "target_language": target_lang,
+                "translated_text": translated_text,
+            })
+            return result
+        except Exception as e:
+            result.update({
+                "success": False,
+                "error": f"Translation error: {str(e)}",
+                "source_language": "English",
+                "target_language": target_lang,
+            })
+            return result
+
+    # Fallback for unexpected types
+    return {
+        "success": False,
+        "translated_text": "",
+        "source_language": "English",
+        "target_language": target_lang,
+        "error": "Unsupported input type for translation",
+    }
+
     """
     Translate text from English to user-selected language.
     """
