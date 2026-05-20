@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Academic Chatbot</title>
+<title>Ray - Academic Chatbot</title>
 
 <style>
 *,
@@ -789,8 +789,143 @@ body {
     font-size: 12px;
   }
 }
+
+/* FAQs Section */
+#faqsModal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary);
+  animation: fadeIn 0.3s ease;
+}
+
+#faqsContent {
+  background-color: rgb(154, 156, 253);
+  margin: auto;
+  margin-top: 5%;
+  padding: 30px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 80%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+#faqsContent h2 {
+  color: var(--text);
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 10px;
+}
+
+.faqs-search {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.faqs-search input {
+  flex: 1;
+  padding: 10px 15px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.faqs-search input::placeholder {
+  color: var(--text-secondary);
+}
+
+.faq-item {
+  margin-bottom: 15px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.faq-question {
+  padding: 15px;
+  cursor: pointer;
+  background-color: var(--bg-secondary);
+  color: var(--text);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.faq-question:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+.faq-toggle {
+  font-size: 20px;
+  transition: transform 0.3s;
+}
+
+.faq-item.active .faq-toggle {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  display: none;
+  padding: 15px;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  border-top: 1px solid var(--border);
+}
+
+.faq-item.active .faq-answer {
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.close-faq {
+  color: var(--text);
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-faq:hover {
+  color: var(--primary);
+}
+
 </style>
-</head>
+```</head>
 
 <body>
 <div class="container">
@@ -799,6 +934,7 @@ body {
   <div class="menu">
     <button class="active" onclick="newChat()" id="newChatBtn">New Chat</button>
     <button onclick="resetChat()">Reset Chat</button>
+    <button onclick="showFAQs()">FAQs</button>
 
     <div class="theme-toggle">
       <button class="theme-btn active" data-theme="dark" onclick="changeTheme('dark')">Dark</button>
@@ -812,7 +948,7 @@ body {
   </div>
 
   <div class="version">
-    <strong>ACADEMIC CHATBOT</strong><br />
+    <strong>RAY CHATBOT</strong><br />
     v1.0.0
   </div>
 </aside>
@@ -822,7 +958,7 @@ body {
 <main class="chat-area">
   <header class="top-bar">
     <div>
-      <div class="top-title">Academic Assistant</div>
+      <div class="top-title">Ray - Academic Assistant</div>
       <div class="top-meta">
         <span id="topUser">User: Guest</span>
         <span id="topRole"></span>
@@ -834,7 +970,7 @@ body {
   </header>
 
   <div id="welcome" class="welcome">
-    <strong>Hello, I’m your academic assistant.</strong>
+    <strong>Hello, I’m Ray, your academic assistant.</strong>
     <br />
     How can I help you today?
   </div>
@@ -1967,6 +2103,103 @@ function useHint(clickedElement) {
     hideHint();
   }
 }
+
+// FAQs Functions
+let allFaqs = [];
+
+async function loadFAQs() {
+  try {
+    const response = await fetch('/faqs', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      allFaqs = data.faqs || [];
+    }
+  } catch (error) {
+    console.error('Error loading FAQs:', error);
+  }
+}
+
+function showFAQs() {
+  const modal = document.getElementById('faqsModal');
+  modal.style.display = 'block';
+  displayFAQs(allFaqs);
+}
+
+function closeFAQs() {
+  const modal = document.getElementById('faqsModal');
+  modal.style.display = 'none';
+}
+
+function displayFAQs(faqs) {
+  const faqsList = document.getElementById('faqsList');
+  faqsList.innerHTML = '';
+  
+  faqs.forEach((faq, index) => {
+    const faqItem = document.createElement('div');
+    faqItem.className = 'faq-item';
+    faqItem.innerHTML = `
+      <div class="faq-question" onclick="toggleFAQ(this)">
+        <span>${faq.question}</span>
+        <span class="faq-toggle">▼</span>
+      </div>
+      <div class="faq-answer">${faq.answer}</div>
+    `;
+    faqsList.appendChild(faqItem);
+  });
+}
+
+function toggleFAQ(element) {
+  const item = element.parentElement;
+  item.classList.toggle('active');
+}
+
+function searchFAQs(query) {
+  if (!query.trim()) {
+    displayFAQs(allFaqs);
+    return;
+  }
+  
+  const filtered = allFaqs.filter(faq => 
+    faq.question.toLowerCase().includes(query.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(query.toLowerCase())
+  );
+  
+  displayFAQs(filtered);
+}
+
+// Close FAQs modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('faqsModal');
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Load FAQs on page load
+loadFAQs();
 </script>
+
+<!-- FAQs Modal -->
+<div id="faqsModal" class="faq-modal">
+  <div id="faqsContent">
+    <span class="close-faq" onclick="closeFAQs()">&times;</span>
+    <h2>Frequently Asked Questions</h2>
+    
+    <div class="faqs-search">
+      <input 
+        type="text" 
+        placeholder="Search FAQs..." 
+        onkeyup="searchFAQs(this.value)"
+      />
+    </div>
+    
+    <div id="faqsList"></div>
+  </div>
+</div>
 </body>
 </html>

@@ -2,19 +2,48 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Academic Chatbot Admin Panel</title>
+<title>Ray Chatbot Admin Panel</title>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --background: #081123;
+  --panel: #0f172a;
+  --surface: #111f3c;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --border: rgba(148, 163, 184, 0.15);
+  --shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
+}
+
+body.light-theme {
+  --background: #f8fafc;
+  --panel: #ffffff;
+  --surface: #f8fafc;
+  --text: #0f172a;
+  --muted: #475569;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --border: rgba(148, 163, 184, 0.35);
+  --shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+}
+
 body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
-    color: #2d3748;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 35%),
+                linear-gradient(180deg, var(--background) 0%, #050814 100%);
+    color: var(--text);
     min-height: 100vh;
     transition: background 0.4s ease, color 0.4s ease;
+}
+
+body.light-theme {
+    background: linear-gradient(135deg, var(--background) 0%, #e2e8f0 100%);
 }
 
 /* Layout */
@@ -27,24 +56,30 @@ body {
 /* Top bar */
 .topbar {
     height: 70px;
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--panel);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 40px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
     z-index: 10;
 }
 
 .topbar div:first-child {
     font-size: 20px;
-    font-weight: 700;
-    background: linear-gradient(90deg, #2b6cb0, #4299e1);
+    font-weight: 800;
+    background: linear-gradient(90deg, #ffffff 30%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
+}
+
+body.light-theme .topbar div:first-child {
+    background: linear-gradient(90deg, var(--text) 30%, var(--accent-strong) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .user-info {
@@ -52,6 +87,12 @@ body {
     font-weight: 500;
     display: flex;
     align-items: center;
+    color: var(--muted);
+}
+
+.user-info span {
+    color: var(--text);
+    font-weight: 600;
 }
 
 /* Navigation bar */
@@ -59,33 +100,33 @@ body {
     display: flex;
     gap: 15px;
     padding: 15px 40px;
-    background: linear-gradient(90deg, #1a202c, #2d3748);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border);
 }
 
 .nav-bar .nav-item {
     padding: 10px 20px;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    color: #a0aec0;
-    font-weight: 500;
+    color: var(--muted);
+    font-weight: 600;
     transition: all 0.3s ease;
     font-size: 14px;
     letter-spacing: 0.3px;
 }
 
 .nav-bar .nav-item:hover {
-    color: #fff;
-    background: rgba(255,255,255,0.1);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
     transform: translateY(-1px);
 }
 
 .nav-bar .nav-item.active {
-    background: #fff;
-    color: #1a202c;
-    font-weight: 600;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    transform: translateY(-1px);
 }
 
 /* Content */
@@ -97,12 +138,12 @@ body {
 
 .window {
     display: none;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--panel);
     backdrop-filter: blur(12px);
     padding: 35px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
     animation: fadeIn 0.4s ease forwards;
 }
 
@@ -117,20 +158,21 @@ body {
 
 h1 {
     font-size: 28px;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 8px;
-    color: #1a202c;
+    color: var(--text);
+    letter-spacing: -0.5px;
 }
 
 h2 {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 700;
     margin: 30px 0 15px;
-    color: #2d3748;
+    color: var(--text);
 }
 
 p {
-    color: #718096;
+    color: var(--muted);
     margin-bottom: 25px;
     line-height: 1.6;
 }
@@ -144,32 +186,32 @@ p {
 }
 
 .card {
-    background: #fff;
+    background: var(--surface);
     padding: 24px;
-    border-radius: 12px;
+    border-radius: 18px;
     text-align: left;
     box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 20px -8px rgba(0,0,0,0.1);
+    box-shadow: 0 16px 28px rgba(56, 189, 248, 0.06);
 }
 
 .card h3 {
-    font-size: 14px;
-    font-weight: 600;
-    color: #718096;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .card .value {
     font-size: 36px;
-    font-weight: 700;
-    color: #2b6cb0;
+    font-weight: 800;
+    color: var(--accent);
     margin: 12px 0;
     letter-spacing: -1px;
 }
@@ -179,32 +221,32 @@ table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    border-radius: 12px;
+    border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    border: 1px solid #e2e8f0;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
 }
 
 th, td {
     padding: 16px 20px;
     font-size: 14px;
     vertical-align: middle;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border);
 }
 
 th {
-    background-color: #f7fafc;
-    font-weight: 600;
+    background-color: var(--surface);
+    font-weight: 700;
     text-align: left;
-    color: #4a5568;
+    color: var(--muted);
     text-transform: uppercase;
     font-size: 12px;
     letter-spacing: 0.5px;
 }
 
 td {
-    background-color: #fff;
-    color: #2d3748;
+    background-color: var(--panel);
+    color: var(--text);
 }
 
 tr:last-child td {
@@ -212,18 +254,17 @@ tr:last-child td {
 }
 
 tr:hover td {
-    background-color: #f7fafc;
+    background-color: var(--surface);
 }
 
 /* Confidence bar */
 .confidence-bar {
     width: 100%;
     height: 8px;
-    background: #edf2f7;
+    background: var(--surface);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 8px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .confidence-fill {
@@ -233,63 +274,63 @@ tr:hover td {
 }
 
 /* Status */
-.pass { color: #38a169; font-weight: 600; background: #c6f6d5; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 12px; }
-.fail { color: #e53e3e; font-weight: 600; background: #fed7d7; padding: 4px 10px; border-radius: 20px; display: inline-block; font-size: 12px; }
+.pass { color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.15); padding: 4px 12px; border-radius: 20px; display: inline-block; font-size: 12px; }
+.fail { color: #ef4444; font-weight: 700; background: rgba(239, 68, 68, 0.15); padding: 4px 12px; border-radius: 20px; display: inline-block; font-size: 12px; }
 
 /* Forms & Buttons */
 .input, textarea, select {
     padding: 12px 16px;
     width: 100%;
     margin-bottom: 16px;
-    border: 1px solid #cbd5e0;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-family: inherit;
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
 }
 
 .input:focus, textarea:focus, select:focus {
     outline: none;
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
 }
 
 .btn {
     padding: 10px 20px;
-    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
 }
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(49, 130, 206, 0.3);
-    background: linear-gradient(135deg, #2b6cb0, #2c5282);
+    box-shadow: 0 6px 16px rgba(56, 189, 248, 0.3);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #e53e3e, #c53030);
-    box-shadow: 0 4px 6px rgba(229, 62, 62, 0.2);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #c53030, #9b2c2c);
-    box-shadow: 0 6px 12px rgba(229, 62, 62, 0.3);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
 }
 
 .logout-btn {
     padding: 8px 18px;
     background: transparent;
-    color: #e53e3e;
-    border: 1px solid #fc8181;
-    border-radius: 8px;
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 12px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -297,8 +338,8 @@ tr:hover td {
 }
 
 .logout-btn:hover {
-    background: #fff5f5;
-    border-color: #e53e3e;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
     transform: translateY(-1px);
 }
 
@@ -306,9 +347,9 @@ tr:hover td {
 .theme-toggle {
     margin-left: 24px;
     padding: 8px 16px;
-    background: #f7fafc;
-    color: #4a5568;
-    border: 1px solid #e2e8f0;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
     border-radius: 20px;
     cursor: pointer;
     font-size: 13px;
@@ -317,23 +358,71 @@ tr:hover td {
 }
 
 .theme-toggle:hover {
-    background: #edf2f7;
-    color: #2d3748;
+    background: rgba(255, 255, 255, 0.08);
 }
 
-/* KB Item */
+/* KB Item & Box Styles */
 .kb-item {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border);
     padding: 20px;
     margin-bottom: 20px;
-    border-radius: 12px;
-    background: #fff;
+    border-radius: 18px;
+    background: var(--surface);
     transition: all 0.3s ease;
 }
 
 .kb-item:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+    box-shadow: var(--shadow);
     transform: translateY(-2px);
+}
+
+.admin-box {
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 18px;
+    border-left: 4px solid var(--accent);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.admin-box.success-accent {
+    border-left-color: #10b981;
+}
+
+.admin-box h3 {
+    margin-top: 0;
+    color: var(--accent);
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.admin-box.success-accent h3 {
+    color: #10b981;
+}
+
+.admin-box p {
+    color: var(--muted);
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.admin-search-box {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+}
+
+.admin-search-box h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
 }
 
 #feedbackReport {
@@ -343,112 +432,34 @@ tr:hover td {
 }
 
 #feedbackReport::-webkit-scrollbar { width: 8px; }
-#feedbackReport::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-#feedbackReport::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
-#feedbackReport::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+#feedbackReport::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 4px; }
+#feedbackReport::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+#feedbackReport::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Dark Mode */
-body.dark-mode {
-    background: linear-gradient(135deg, #1a202c 0%, #171923 100%);
-    color: #e2e8f0;
+.chart-container-wrapper {
+    background: var(--panel);
+    padding: 24px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 40px;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-body.dark-mode .topbar {
-    background: rgba(26, 32, 44, 0.85);
-    border-bottom-color: #2d3748;
-    color: #e2e8f0;
+.chart-container-wrapper h3 {
+    color: var(--text) !important;
 }
-
-body.dark-mode .topbar div:first-child {
-    background: linear-gradient(90deg, #63b3ed, #90cdf4);
-    -webkit-background-clip: text;
-}
-
-body.dark-mode .window {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: rgba(255,255,255,0.05);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-}
-
-body.dark-mode h1, body.dark-mode h2 {
-    color: #f7fafc;
-}
-
-body.dark-mode p {
-    color: #a0aec0;
-}
-
-body.dark-mode .card {
-    background: #2d3748;
-    border-color: #4a5568;
-}
-
-body.dark-mode .card h3 {
-    color: #a0aec0;
-}
-
-body.dark-mode .card .value {
-    color: #63b3ed;
-}
-
-body.dark-mode table {
-    border-color: #4a5568;
-}
-
-body.dark-mode th {
-    background-color: #1a202c;
-    color: #a0aec0;
-    border-color: #4a5568;
-}
-
-body.dark-mode td {
-    background-color: #2d3748;
-    border-color: #4a5568;
-    color: #e2e8f0;
-}
-
-body.dark-mode tr:hover td {
-    background-color: #2a4365;
-}
-
-body.dark-mode .confidence-bar {
-    background: #4a5568;
-}
-
-body.dark-mode .kb-item {
-    background: #2d3748;
-    border-color: #4a5568;
-}
-
-body.dark-mode .input, body.dark-mode textarea, body.dark-mode select {
-    background: #1a202c;
-    color: #e2e8f0;
-    border-color: #4a5568;
-}
-
-body.dark-mode .input:focus, body.dark-mode textarea:focus, body.dark-mode select:focus {
-    border-color: #63b3ed;
-    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.15);
-}
-
-body.dark-mode .theme-toggle {
-    background: #2d3748;
-    color: #e2e8f0;
-    border-color: #4a5568;
-}
-
-body.dark-mode .theme-toggle:hover {
-    background: #4a5568;
-}
-
-body.dark-mode .logout-btn {
-    border-color: #e53e3e;
-}
-
-body.dark-mode .logout-btn:hover {
-    background: rgba(229, 62, 62, 0.1);
+td select {
+    padding: 8px 12px;
+    width: auto;
+    margin-bottom: 0;
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -457,7 +468,7 @@ body.dark-mode .logout-btn:hover {
 
     <!-- Top Bar -->
     <div class="topbar">
-        <div>Academic Chatbot – Admin</div>
+        <div>Ray Chatbot – Admin</div>
         <div class="user-info">
             <span id="adminNameDisplay">Admin User</span> | <span id="adminEmailDisplay">admin@university.edu</span>
             <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
@@ -470,7 +481,9 @@ body.dark-mode .logout-btn:hover {
         <div class="nav-item active" onclick="showWindow(event, 'analytics')">Analytics</div>
         <div class="nav-item" onclick="showWindow(event, 'users')">User Management</div>
         <div class="nav-item" onclick="showWindow(event, 'kb')">Update Knowledge Base</div>
+        <div class="nav-item" onclick="showWindow(event, 'faqs')">FAQs Management</div>
         <div class="nav-item" onclick="showWindow(event, 'feedback')">Feedback View</div>
+        <div class="nav-item" onclick="showWindow(event, 'low_confidence')">Low Confidence</div>
     </div>
 
     <!-- Content -->
@@ -480,7 +493,7 @@ body.dark-mode .logout-btn:hover {
         <div id="analytics" class="window active">
             <h1>Model Evaluation</h1>
             <p>Performance metrics and test results</p>
-            <button id="downloadAnalyticsBtn" onclick="downloadAnalyticsReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Analytics (CSV)</button>
+            <button id="downloadAnalyticsBtn" class="btn" onclick="downloadAnalyticsReport()" style="margin-bottom: 20px;">📥 Download Analytics (CSV)</button>
 
             <div class="metrics">
                 <div class="card">
@@ -506,6 +519,13 @@ body.dark-mode .logout-btn:hover {
                 </div>
             </div>
 
+            <div class="chart-container-wrapper">
+                <h3 style="margin-bottom: 15px; font-size: 16px; font-weight: 600;">Confidence Scoring (70% Threshold)</h3>
+                <div style="position: relative; height: 320px; width: 100%;">
+                    <canvas id="confidenceChart"></canvas>
+                </div>
+            </div>
+
             <h2>Test Results</h2>
             <table>
                 <thead>
@@ -524,7 +544,7 @@ body.dark-mode .logout-btn:hover {
         <!-- Users -->
         <div id="users" class="window">
             <h1>User Management</h1>
-            <button id="downloadUsersBtn" onclick="downloadUsersReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Users (CSV)</button>
+            <button id="downloadUsersBtn" class="btn" onclick="downloadUsersReport()" style="margin-bottom: 20px;">📥 Download Users (CSV)</button>
             <table>
                 <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Action</th></tr></thead>
                 <tbody id="userTable"></tbody>
@@ -535,22 +555,25 @@ body.dark-mode .logout-btn:hover {
         <div id="kb" class="window">
             <h1>Update Knowledge Base</h1>
             <p class="placeholder">Add, edit, or remove FAQs and responses.</p>
-            <button id="downloadKBBtn" onclick="downloadKnowledgeBaseReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Knowledge Base (CSV)</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="downloadKBBtn" class="btn" onclick="downloadKnowledgeBaseReport()">📥 Download Knowledge Base (CSV)</button>
+                <button id="generateKBEmbeddingsBtn" class="btn" onclick="generatePolicyEmbeddings()" style="background: #a855f7; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);">⚡ Generate Embeddings</button>
+            </div>
             
-            <div style="margin-bottom: 20px; padding: 15px; background: #d4edff; border-radius: 8px; border-left: 4px solid #0080c0;">
-                <h3 style="margin-top: 0; color: #0080c0;">📚 Add New Policy to Knowledge Base</h3>
-                <p style="color: #444; margin-bottom: 15px;">Enter your policy details directly as a paragraph below:</p>
+            <div class="admin-box">
+                <h3>📚 Add New Policy to Knowledge Base</h3>
+                <p>Enter your policy details directly as a paragraph below:</p>
                 <div style="margin-bottom: 15px;">
-                  <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #0080c0;">Policy Details:</label>
-                  <textarea id="kbNewText" style="padding: 10px; width: 100%; min-height: 150px; border: 2px solid #0080c0; border-radius: 6px; font-family: Arial, sans-serif;" placeholder="Enter the policy details as a paragraph..."></textarea>
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text); font-size: 13px;">Policy Details:</label>
+                  <textarea id="kbNewText" class="input" style="min-height: 150px;" placeholder="Enter the policy details as a paragraph..."></textarea>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
-                  <button class="btn" onclick="addKB()" style="width: 100%; background: #0080c0;">Add Policy</button>
+                  <button class="btn" onclick="addKB()">Add Policy</button>
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
-                <h3 style="margin-top: 0;">Search Policies</h3>
+            <div class="admin-search-box">
+                <h3>Search Policies</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                   <input id="kbSearch" class="input" placeholder="Search by keyword..." style="margin-bottom: 0;">
                   <button class="btn" onclick="searchKB()" style="width: 100%; margin-bottom: 0;">Search</button>
@@ -558,6 +581,43 @@ body.dark-mode .logout-btn:hover {
             </div>
 
             <div id="kbResults" style="margin-bottom: 30px;"></div>
+        </div>
+
+        <!-- FAQs Management -->
+        <div id="faqs" class="window">
+            <h1>FAQs Management</h1>
+            <p>Manage Frequently Asked Questions</p>
+            
+            <div style="margin-bottom: 20px;">
+                <input 
+                    type="text" 
+                    id="faqsSearchInput" 
+                    placeholder="Search FAQs..." 
+                    onkeyup="searchFAQsAdmin(this.value)"
+                    style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 6px;"
+                />
+            </div>
+
+            <div class="admin-box success-accent">
+                <h3>➕ Add New FAQ</h3>
+                <input 
+                    type="text" 
+                    id="newFaqQuestion" 
+                    placeholder="Enter question" 
+                    class="input"
+                    style="margin-bottom: 10px;"
+                />
+                <textarea 
+                    id="newFaqAnswer" 
+                    placeholder="Enter answer" 
+                    rows="5" 
+                    class="input"
+                    style="margin-bottom: 12px; font-family: inherit;"
+                ></textarea>
+                <button class="btn" onclick="addFAQAdmin()" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">Add FAQ</button>
+            </div>
+
+            <div id="faqsResultsAdmin" style="margin-bottom: 30px;"></div>
         </div>
 
         <!-- Feedback -->
@@ -576,27 +636,33 @@ body.dark-mode .logout-btn:hover {
         <option value="no">Not Helpfull</option>
       </select>
     </div>
-    <button id="downloadFeedbackBtn" onclick="downloadFeedbackReport()" style="margin-bottom: 20px; padding: 10px 20px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download Report (CSV)</button>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button id="downloadFeedbackBtn" class="btn" onclick="downloadFeedbackReport()">📥 Download Report (CSV)</button>
+    </div>
     
-    <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
-      <h3 style="margin-top: 0; color: #2e7d32;">💬 Send Manual Response</h3>
+    <div class="admin-box success-accent">
+      <h3>💬 Send Manual Response</h3>
       <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold;">User Email:</label>
-        <input id="manualUserEmail" type="email" placeholder="Enter user email..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--text);">User Email:</label>
+        <input id="manualUserEmail" type="email" placeholder="Enter user email..." class="input" style="margin-bottom: 10px;">
       </div>
       <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Question:</label>
-        <input id="manualQuestion" type="text" placeholder="User's question..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--text);">Question:</label>
+        <input id="manualQuestion" type="text" placeholder="User's question..." class="input" style="margin-bottom: 10px;">
       </div>
       <div style="margin-bottom: 10px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Your Response:</label>
-        <textarea id="manualResponse" placeholder="Type your response here..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; min-height: 100px; margin-bottom: 10px;"></textarea>
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--text);">Your Response:</label>
+        <textarea id="manualResponse" placeholder="Type your response here..." class="input" style="min-height: 100px; margin-bottom: 10px; font-family: inherit;"></textarea>
       </div>
-      <button onclick="sendManualResponse()" style="padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">✓ Send Response</button>
+      <button class="btn" onclick="sendManualResponse()" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">✓ Send Response</button>
     </div>
     
     <div id="feedbackReport"></div>
         </div>
+    <div id="low_confidence" class="window">
+        <h1>Low Confidence Report</h1>
+        <div id="lowConfidenceReport"></div>
+    </div>
 
     </div>
 </div>
@@ -626,6 +692,193 @@ function showWindow(event, id) {
     if (id === 'users') loadUsers();
     if (id === 'kb') searchKB();
     if (id === 'feedback') loadFeedbackReport();
+    if (id === 'low_confidence') loadLowConfidenceReport();
+}
+
+let confidenceChartInstance = null;
+
+async function loadLowConfidenceReport() {
+  try {
+    const res = await fetch('/admin/low_confidence');
+    if (!res.ok) throw new Error('Failed to fetch low confidence data');
+
+    // Parse JSON response
+    const data = await res.json();
+
+    // Expecting { "questions": [ { confidence, question, user }, ... ] }
+    const questions = data.questions || [];
+
+    // Build HTML table
+    let tableHtml = '<table border="1" style="border-collapse: collapse; width: 100%;">';
+    tableHtml += '<tr><th>Confidence</th><th>Question</th><th>User</th></tr>';
+    questions.forEach(q => {
+      tableHtml += `<tr>
+        <td>${q.confidence}</td>
+        <td>${q.question}</td>
+        <td>${q.user}</td>
+      </tr>`;
+    });
+    tableHtml += '</table>';
+
+    // Render table
+    const reportDiv = document.getElementById('lowConfidenceReport');
+    reportDiv.innerHTML = tableHtml;
+
+    // Log JSON for debugging
+    console.log(JSON.stringify(data, null, 2));
+
+  } catch (error) {
+    console.error('Error loading low confidence report:', error);
+    const reportDiv = document.getElementById('lowConfidenceReport');
+    reportDiv.innerHTML = '<p>Error loading low confidence data.</p>';
+  }
+}
+
+
+
+
+
+function updateConfidenceChart(items) {
+    const canvas = document.getElementById("confidenceChart");
+    if (!canvas) return;
+
+    const chartData = [];
+    const labels = [];
+    const thresholdData = [];
+
+    const displayItems = items || [];
+
+    displayItems.forEach((d, index) => {
+        let confStr = d.confidence_score || '0';
+        let conf = parseFloat(confStr);
+        if (conf > 1) { conf = conf / 100; }
+        if (isNaN(conf)) { conf = 0; }
+        
+        const confPercent = Math.round(conf * 100);
+        chartData.push(confPercent);
+        
+        const queryText = d.user_query || '';
+        const shortQuery = queryText.length > 15 ? queryText.substring(0, 15) + '...' : queryText;
+        labels.push(shortQuery || `Q${index + 1}`);
+        thresholdData.push(70);
+    });
+
+    if (confidenceChartInstance) {
+        confidenceChartInstance.destroy();
+    }
+
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)";
+    const textColor = isDarkMode ? "#e2e8f0" : "#4a5568";
+
+    const ctx = canvas.getContext("2d");
+    confidenceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Confidence Score (%)',
+                    data: chartData,
+                    borderColor: '#3182ce',
+                    backgroundColor: 'rgba(49, 130, 206, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#3182ce',
+                    pointHoverRadius: 7
+                },
+                {
+                    label: '70% Threshold',
+                    data: thresholdData,
+                    borderColor: '#e53e3e',
+                    borderWidth: 2,
+                    borderDash: [6, 6],
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return displayItems[index].user_query || 'Query';
+                        },
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const score = context.raw;
+                            const timestamp = displayItems[index].timestamp ? new Date(displayItems[index].timestamp).toLocaleString() : 'N/A';
+                            return [
+                                `Confidence: ${score}%`,
+                                `Time: ${timestamp}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        color: gridColor
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: {
+                            family: "'Inter', sans-serif"
+                        },
+                        callback: function(value) {
+                            return value + "%";
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Confidence Score',
+                        color: textColor,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 'bold'
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: {
+                            family: "'Inter', sans-serif"
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Queries',
+                        color: textColor,
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 'bold'
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 async function evaluateMetrics() {
@@ -633,6 +886,7 @@ async function evaluateMetrics() {
         const res = await fetch('/admin/feedback');
         if (!res.ok) throw new Error('Failed to fetch metrics');
         const data = await res.json();
+        feedbackData = data; // store globally for filtering/theme toggles
         
         // Update metrics cards
         if (data.metrics) {
@@ -698,6 +952,10 @@ async function evaluateMetrics() {
         } else {
             tbody.innerHTML = "<tr><td colspan='5'>No test results available</td></tr>";
         }
+        
+        // Render confidence scoring chart
+        updateConfidenceChart(data.items);
+        
     } catch (error) {
         console.error('Error loading metrics:', error);
         document.getElementById("results-body").innerHTML = "<tr><td colspan='5'>Error loading test results</td></tr>";
@@ -1296,8 +1554,211 @@ async function sendManualResponse() {
 
 function toggleTheme() {
   document.body.classList.toggle('dark-mode');
+  if (feedbackData && feedbackData.items) {
+    updateConfidenceChart(feedbackData.items);
+  }
 }
 
+// FAQs Admin Functions
+let allFAQsAdmin = [];
+
+async function loadFAQsAdmin() {
+  try {
+    const response = await fetch('/admin/faqs', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      allFAQsAdmin = data.faqs || [];
+      displayFAQsAdmin(allFAQsAdmin);
+    }
+  } catch (error) {
+    console.error('Error loading FAQs:', error);
+    alert('Failed to load FAQs');
+  }
+}
+
+function displayFAQsAdmin(faqs) {
+  const resultsDiv = document.getElementById('faqsResultsAdmin');
+  resultsDiv.innerHTML = '';
+  
+  if (faqs.length === 0) {
+    resultsDiv.innerHTML = '<p style="color: #999;">No FAQs found</p>';
+    return;
+  }
+  
+  faqs.forEach((faq, index) => {
+    const faqDiv = document.createElement('div');
+    faqDiv.style.cssText = 'border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9f9f9;';
+    faqDiv.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px;">${faq.question}</div>
+          <div style="color: #666; margin-bottom: 10px; line-height: 1.5;">${faq.answer}</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="editFAQAdmin(${index})" style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">✏️ Edit</button>
+          <button onclick="deleteFAQAdmin(${index})" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>
+        </div>
+      </div>
+    `;
+    resultsDiv.appendChild(faqDiv);
+  });
+}
+
+async function addFAQAdmin() {
+  const question = document.getElementById('newFaqQuestion').value.trim();
+  const answer = document.getElementById('newFaqAnswer').value.trim();
+  
+  if (!question || !answer) {
+    alert('Please enter both question and answer');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/admin/faqs', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, answer })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      allFAQsAdmin = data.faqs || [];
+      displayFAQsAdmin(allFAQsAdmin);
+      document.getElementById('newFaqQuestion').value = '';
+      document.getElementById('newFaqAnswer').value = '';
+      alert('FAQ added successfully!');
+    } else {
+      alert('Failed to add FAQ');
+    }
+  } catch (error) {
+    console.error('Error adding FAQ:', error);
+    alert('Error adding FAQ: ' + error.message);
+  }
+}
+
+async function editFAQAdmin(index) {
+  const faq = allFAQsAdmin[index];
+  const newQuestion = prompt('Edit Question:', faq.question);
+  
+  if (newQuestion === null) return;
+  
+  if (!newQuestion.trim()) {
+    alert('Question cannot be empty');
+    return;
+  }
+  
+  const newAnswer = prompt('Edit Answer:', faq.answer);
+  
+  if (newAnswer === null) return;
+  
+  if (!newAnswer.trim()) {
+    alert('Answer cannot be empty');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/admin/faqs/${index}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: newQuestion, answer: newAnswer })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      allFAQsAdmin = data.faqs || [];
+      displayFAQsAdmin(allFAQsAdmin);
+      alert('FAQ updated successfully!');
+    } else {
+      alert('Failed to update FAQ');
+    }
+  } catch (error) {
+    console.error('Error updating FAQ:', error);
+    alert('Error updating FAQ: ' + error.message);
+  }
+}
+
+async function deleteFAQAdmin(index) {
+  if (!confirm('Are you sure you want to delete this FAQ?')) return;
+  
+  try {
+    const response = await fetch(`/admin/faqs/${index}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      allFAQsAdmin = data.faqs || [];
+      displayFAQsAdmin(allFAQsAdmin);
+      alert('FAQ deleted successfully!');
+    } else {
+      alert('Failed to delete FAQ');
+    }
+  } catch (error) {
+    console.error('Error deleting FAQ:', error);
+    alert('Error deleting FAQ: ' + error.message);
+  }
+}
+
+function searchFAQsAdmin(query) {
+  if (!query.trim()) {
+    displayFAQsAdmin(allFAQsAdmin);
+    return;
+  }
+  
+  const filtered = allFAQsAdmin.filter(faq =>
+    faq.question.toLowerCase().includes(query.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(query.toLowerCase())
+  );
+  
+  displayFAQsAdmin(filtered);
+}
+// Embedding Generation Functions
+async function generatePolicyEmbeddings() {
+  const btn = document.getElementById('generateKBEmbeddingsBtn');
+  const originalText = btn.textContent;
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating...';
+  
+  try {
+    const response = await fetch('/admin/generate-embeddings/policy', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      alert('✅ Policy embeddings generated successfully!\n\nThe knowledge base has been indexed for faster searches.');
+      console.log('Embeddings output:', data.output);
+    } else {
+      const data = await response.json();
+      alert('❌ Error: ' + data.message);
+      console.error('Error:', data.error);
+    }
+  } catch (error) {
+    console.error('Error generating embeddings:', error);
+    alert('❌ Error: ' + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+
+// Load FAQs when admin opens dashboard
+window.addEventListener('load', function() {
+  loadFAQsAdmin();
+});
 </script>
 
 </body>
