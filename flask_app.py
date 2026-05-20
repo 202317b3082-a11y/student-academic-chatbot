@@ -8,13 +8,28 @@ import sqlite3
 import db
 import csv
 import os
+import json
 from datetime import datetime, timedelta
+LOW_CONF_CSV = os.path.join(os.path.dirname(__file__), 'low_confidence.csv')
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), 'admin_settings.json')
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import jwt
+from langchain_huggingface import HuggingFaceEmbeddings
 from flask_cors import CORS
 from suggestion import hint
 from evaluation import evaluate, metrics
+import subprocess
+
+def get_settings():
+    if not os.path.exists(SETTINGS_FILE):
+        return {"hide_low_confidence": False}
+    with open(SETTINGS_FILE, 'r') as f:
+        return json.load(f)
+
+def save_settings(settings):
+    with open(SETTINGS_FILE, 'w') as f:
+        json.dump(settings, f)
 
 # --------------------------------------------------
 # FlaskApp         Configuration
@@ -216,6 +231,19 @@ def chat_api():
         return jsonify({"error": "Message is required"}), 400
 
     try:
+        # Step 0: Greeting handler
+        greetings = ["hi", "hello", "hey", "hii", "hola"]
+        if message.lower() in greetings:
+            return jsonify({
+                "response": [f"Hello {request.user['email']}! How can I help you today?"],
+                "confidence": 1.0,
+                "confidence_score": 100,
+                "hint": "",
+                "user": request.user["email"],
+                "user_language": user_language,
+                "detected_language": user_language
+            }), 200
+
         # Step 1: Translate user message to English if needed
         english_message = message
         detected_language = user_language
@@ -226,11 +254,10 @@ def chat_api():
             if translate_response['success']:
                 english_message = translate_response['translated_text']
             else:
-                # Log error but continue with original message
                 print(f"Translation warning: {translate_response.get('error', 'Unknown error')}")
                 english_message = message
         
-        # Step 2: Process with NLP using English text
+        # Step 2: Process with NLP
         try:
             nlp_result = nlpcall(english_message)
             if isinstance(nlp_result, dict):
@@ -248,7 +275,35 @@ def chat_api():
         if not isinstance(resp, list):
             resp = [str(resp)] if resp else ["No response generated"]
 
-        # Step 3: Translate response back to user language if needed
+        # Convert confidence to float
+        try:
+            conf = float(conf) if conf is not None else 0
+        except (TypeError, ValueError):
+            conf = 0
+
+        # Step 3: Fallback if confidence < 70
+        csv_file = "low_confidence_questions.csv"
+        file_exists = os.path.isfile(csv_file)
+        with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["user", "question", "confidence"])
+            writer.writerow([request.user["email"], message, conf])
+        
+        hide_low_confidence = get_settings().get("hide_low_confidence", False)
+        
+        if conf < 70 and not hide_low_confidence:
+            return jsonify({
+                "response": ["Confidence is low, please try again with different phrasing."],
+                "confidence": conf,
+                "confidence_score": conf,
+                "hint": "",
+                "user": request.user["email"],
+                "user_language": user_language,
+                "detected_language": detected_language
+            }), 200
+
+        # Step 4: Translate response back if needed
         if user_language.lower() != "english":
             response_text = "\n".join(resp) if isinstance(resp, list) else str(resp)
             translate_back_response = translate_from_english(response_text, user_language)
@@ -256,24 +311,17 @@ def chat_api():
             if translate_back_response['success']:
                 translated_resp = [translate_back_response['translated_text']]
             else:
-                # If translation fails, return original response with warning
                 print(f"Back-translation warning: {translate_back_response.get('error', 'Unknown error')}")
                 translated_resp = resp
         else:
             translated_resp = resp
 
-        # Step 4: Get hint if available
+        # Step 5: Get hint if available
         try:
             hint_result = hint(english_message)
         except Exception as e:
             print(f"Error in hint: {str(e)}")
             hint_result = ""
-
-        # Convert confidence to float
-        try:
-            conf = float(conf) if conf is not None else 0
-        except (TypeError, ValueError):
-            conf = 0
 
         return jsonify({
             "response": translated_resp,
@@ -504,6 +552,34 @@ def admin_feedback_report():
     
     return jsonify({'items': items, 'metrics': formatted_metrics}), 200
 
+@app.route('/admin/low_confidence', methods=['GET'])
+@jwt_required
+@admin_required
+def low_confidence_questions():
+    csv_path = os.path.join(os.path.dirname(__file__), 'low_confidence_questions.csv')
+    if not os.path.exists(csv_path):
+        return jsonify({'questions': []}), 200
+    questions = []
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            questions.append(row)
+    return jsonify({'questions': questions}), 200
+
+@app.route('/admin/settings', methods=['GET'])
+@jwt_required
+@admin_required
+def get_admin_settings():
+    return jsonify(get_settings()), 200
+
+@app.route('/admin/settings', methods=['POST'])
+@jwt_required
+@admin_required
+def update_admin_settings():
+    data = request.get_json()
+    save_settings(data)
+    return jsonify({'message': 'Settings updated'}), 200
+
 # --------------------------------------------------
 # Manual Admin Responses
 # --------------------------------------------------
@@ -548,6 +624,206 @@ def delete_user_response(response_id):
     except Exception as e:
         print(f"Error deleting response: {str(e)}")
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
+# --------------------------------------------------
+# FAQs Management
+# --------------------------------------------------
+
+import json
+
+FAQS_FILE = os.path.join(os.path.dirname(__file__), 'faqs.json')
+
+@app.route('/faqs', methods=['GET'])
+@jwt_required
+def get_faqs():
+    try:
+        if not os.path.exists(FAQS_FILE):
+            return jsonify({'faqs': []}), 200
+        
+        with open(FAQS_FILE, 'r', encoding='utf-8') as f:
+            faqs = json.load(f)
+        
+        return jsonify({'faqs': faqs}), 200
+    except Exception as e:
+        print(f"Error fetching FAQs: {str(e)}")
+        return jsonify({'faqs': [], 'error': str(e)}), 500
+
+@app.route('/admin/faqs', methods=['GET'])
+@jwt_required
+@admin_required
+def admin_get_faqs():
+    try:
+        if not os.path.exists(FAQS_FILE):
+            return jsonify({'faqs': []}), 200
+        
+        with open(FAQS_FILE, 'r', encoding='utf-8') as f:
+            faqs = json.load(f)
+        
+        return jsonify({'faqs': faqs}), 200
+    except Exception as e:
+        print(f"Error fetching FAQs: {str(e)}")
+        return jsonify({'faqs': [], 'error': str(e)}), 500
+
+@app.route('/admin/faqs', methods=['POST'])
+@jwt_required
+@admin_required
+def admin_add_faq():
+    try:
+        data = request.get_json()
+        question = data.get('question', '').strip()
+        answer = data.get('answer', '').strip()
+        
+        if not question or not answer:
+            return jsonify({'message': 'Question and answer are required'}), 400
+        
+        # Load existing FAQs
+        if os.path.exists(FAQS_FILE):
+            with open(FAQS_FILE, 'r', encoding='utf-8') as f:
+                faqs = json.load(f)
+        else:
+            faqs = []
+        
+        # Add new FAQ
+        faqs.append({
+            'question': question,
+            'answer': answer
+        })
+        
+        # Save to file
+        with open(FAQS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(faqs, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({'message': 'FAQ added successfully', 'faqs': faqs}), 201
+    except Exception as e:
+        print(f"Error adding FAQ: {str(e)}")
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+@app.route('/admin/faqs/<int:faq_id>', methods=['PUT'])
+@jwt_required
+@admin_required
+def admin_update_faq(faq_id):
+    try:
+        data = request.get_json()
+        question = data.get('question', '').strip()
+        answer = data.get('answer', '').strip()
+        
+        if not question or not answer:
+            return jsonify({'message': 'Question and answer are required'}), 400
+        
+        if not os.path.exists(FAQS_FILE):
+            return jsonify({'message': 'FAQs file not found'}), 404
+        
+        with open(FAQS_FILE, 'r', encoding='utf-8') as f:
+            faqs = json.load(f)
+        
+        if faq_id < 0 or faq_id >= len(faqs):
+            return jsonify({'message': 'FAQ not found'}), 404
+        
+        faqs[faq_id] = {
+            'question': question,
+            'answer': answer
+        }
+        
+        with open(FAQS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(faqs, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({'message': 'FAQ updated successfully', 'faqs': faqs}), 200
+    except Exception as e:
+        print(f"Error updating FAQ: {str(e)}")
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+@app.route('/admin/faqs/<int:faq_id>', methods=['DELETE'])
+@jwt_required
+@admin_required
+def admin_delete_faq(faq_id):
+    try:
+        if not os.path.exists(FAQS_FILE):
+            return jsonify({'message': 'FAQs file not found'}), 404
+        
+        with open(FAQS_FILE, 'r', encoding='utf-8') as f:
+            faqs = json.load(f)
+        
+        if faq_id < 0 or faq_id >= len(faqs):
+            return jsonify({'message': 'FAQ not found'}), 404
+        
+        faqs.pop(faq_id)
+        
+        with open(FAQS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(faqs, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({'message': 'FAQ deleted successfully', 'faqs': faqs}), 200
+    except Exception as e:
+        print(f"Error deleting FAQ: {str(e)}")
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
+# --------------------------------------------------
+# Embedding Generation
+# --------------------------------------------------
+
+@app.route('/admin/generate-embeddings/policy', methods=['POST'])
+@jwt_required
+@admin_required
+def generate_policy_embeddings():
+    try:
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "create_embedding.py")
+
+        # Run the script, let it print directly to console/logs
+        result = subprocess.run(
+            ["python", script_path],
+            timeout=300
+        )
+
+        if result.returncode == 0:
+            return jsonify({
+                "message": "Policy embeddings generated successfully!"
+            }), 200
+        else:
+            return jsonify({
+                "message": "Error generating embeddings",
+                "error": f"Script exited with code {result.returncode}"
+            }), 500
+
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            "message": "Error generating embeddings",
+            "error": "Process timed out after 300 seconds"
+        }), 500
+
+    except Exception as e:
+        print(f"Error generating policy embeddings: {str(e)}")
+        return jsonify({
+            "message": "Unexpected error occurred",
+            "error": str(e)
+        }), 500
+    
+          
+@app.route('/admin/generate-embeddings/feedback', methods=['POST'])
+@jwt_required
+@admin_required
+def generate_feedback_embeddings():
+    try:
+        import subprocess
+        result = subprocess.run(
+            ['python', './feedback_embedding.py'],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        
+        if result.returncode == 0:
+            return jsonify({
+                'message': 'Feedback embeddings generated successfully!',
+                'output': result.stdout
+            }), 200
+        else:
+            return jsonify({
+                'message': 'Error generating embeddings',
+                'error': result.stderr
+            }), 500
+    except Exception as e:
+        print(f"Error generating feedback embeddings: {str(e)}")
+        return jsonify({'message': f'Error: {str(e)}'}), 500
+
 # Run App
 # --------------------------------------------------
 
