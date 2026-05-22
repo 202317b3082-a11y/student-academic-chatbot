@@ -74,6 +74,19 @@ body.light-theme {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar .logo-img {
+    height: 35px;
+    width: auto;
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.2));
+}
+
+body.light-theme .topbar .logo-img {
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.2));
 }
 
 body.light-theme .topbar div:first-child {
@@ -436,6 +449,116 @@ tr:hover td {
 #feedbackReport::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 #feedbackReport::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
+.feedback-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 150ms ease;
+    cursor: pointer;
+}
+
+.feedback-card:hover {
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.feedback-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.feedback-card-content {
+    flex: 1;
+}
+
+.feedback-card-toggle {
+    font-size: 18px;
+    transition: transform 200ms ease;
+    min-width: 24px;
+    text-align: center;
+    color: var(--accent);
+}
+
+.feedback-card.expanded .feedback-card-toggle {
+    transform: rotate(180deg);
+}
+
+.feedback-card-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.feedback-card-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.feedback-card-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.feedback-card-meta-label {
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.feedback-card-answer {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.feedback-card.expanded .feedback-card-answer {
+    display: block;
+    animation: slideDown 200ms ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.feedback-card-answer-label {
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.feedback-card-answer-text {
+    background: rgba(56, 189, 248, 0.08);
+    border-left: 3px solid var(--accent);
+    padding: 12px;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
 .chart-container-wrapper {
     background: var(--panel);
     padding: 24px;
@@ -468,11 +591,15 @@ td select {
 
     <!-- Top Bar -->
     <div class="topbar">
-        <div>Ray Chatbot – Admin</div>
+        <div>
+            <img src="logo.png" alt="Ray Logo" class="logo-img">
+            Ray Admin
+        </div>
         <div class="user-info">
             <span id="adminNameDisplay">Admin User</span> | <span id="adminEmailDisplay">admin@university.edu</span>
             <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
             <button class="logout-btn" style="margin-left: 20px;" onclick="logoutAdmin()">Logout</button>
+<a href="/chat" class="btn" style="margin-left: 10px;">Chat UI</a>
         </div>
     </div>
 
@@ -484,6 +611,7 @@ td select {
         <div class="nav-item" onclick="showWindow(event, 'faqs')">FAQs Management</div>
         <div class="nav-item" onclick="showWindow(event, 'feedback')">Feedback View</div>
         <div class="nav-item" onclick="showWindow(event, 'low_confidence')">Low Confidence</div>
+        <div class="nav-item" onclick="showWindow(event, 'settings')">Settings</div>
     </div>
 
     <!-- Content -->
@@ -663,6 +791,14 @@ td select {
         <h1>Low Confidence Report</h1>
         <div id="lowConfidenceReport"></div>
     </div>
+    <div id="settings" class="window">
+        <h1>Admin Settings</h1>
+        <div class="admin-box">
+            <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text);">Show Low Confidence Items</label>
+            <input type="checkbox" id="hideLowConfidenceCheckbox" class="input" style="width:auto;" />
+        </div>
+        <button class="btn" onclick="updateAdminSettings()" style="margin-top:15px;">Save Settings</button>
+    </div>
 
     </div>
 </div>
@@ -693,6 +829,7 @@ function showWindow(event, id) {
     if (id === 'kb') searchKB();
     if (id === 'feedback') loadFeedbackReport();
     if (id === 'low_confidence') loadLowConfidenceReport();
+    if (id === 'settings') loadAdminSettings();
 }
 
 let confidenceChartInstance = null;
@@ -734,9 +871,37 @@ async function loadLowConfidenceReport() {
   }
 }
 
+// Load admin settings and populate UI
+async function loadAdminSettings() {
+  try {
+    const res = await fetch('/admin/settings', { method: 'GET' });
+    if (!res.ok) throw new Error('Failed to fetch admin settings');
+    const settings = await res.json();
+    const hideCheckbox = document.getElementById('hideLowConfidenceCheckbox');
+    hideCheckbox.checked = settings.hide_low_confidence === true;
+  } catch (e) {
+    console.error('Error loading admin settings:', e);
+  }
+}
 
-
-
+// Update admin settings based on UI
+async function updateAdminSettings() {
+  try {
+    const hide = document.getElementById('hideLowConfidenceCheckbox').checked;
+    const payload = { hide_low_confidence: hide };
+    const res = await fetch('/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to update admin settings');
+    const result = await res.json();
+    alert(result.message || 'Settings updated');
+  } catch (e) {
+    console.error('Error updating admin settings:', e);
+    alert('Failed to update settings');
+  }
+}
 
 function updateConfidenceChart(items) {
     const canvas = document.getElementById("confidenceChart");
@@ -1073,6 +1238,14 @@ async function logoutAdmin() {
 
 /* INITIAL LOAD */
 document.addEventListener('DOMContentLoaded', () => {
+  // Load and apply saved theme preference
+  const savedTheme = localStorage.getItem('adminTheme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+  } else {
+    document.body.classList.remove('light-theme');
+  }
+  
   loadAdminInfo();
   evaluateMetrics();
 });
@@ -1421,22 +1594,40 @@ function renderFeedbackCards() {
     container.innerHTML = '<p>No feedback matching filters.</p>';
     return;
   }
-  filtered.forEach(it => {
-    let confStr = it.confidence_score || '0';
-    let conf = parseFloat(confStr);
-    if (conf > 1) conf = conf / 100;
-    if (isNaN(conf)) conf = 0;
-    const confPercent = (conf * 100).toFixed(0);
+  filtered.forEach((it, index) => {
     const fb = (it.feedback || '').toLowerCase().trim();
     const cardHTML = `
-<div class="card">
-  <h3>${it.user_query || 'N/A'}</h3>
-  <p style="margin:4px 0;"><em>${it.chatbot_response || 'N/A'}</em></p>
-  <p><strong>Feedback:</strong> ${fb}</p>
-  <p><strong>User:</strong> ${it.user_email || 'N/A'}</p>
-  <p><strong>Confidence:</strong> ${confPercent}%</p>
+<div class="feedback-card" id="card-${index}">
+  <div class="feedback-card-header">
+    <div class="feedback-card-content">
+      <div class="feedback-card-title">${it.user_query || 'N/A'}</div>
+      <div class="feedback-card-meta">
+        <div class="feedback-card-meta-item">
+          <span class="feedback-card-meta-label">Feedback</span>
+          <span>${fb}</span>
+        </div>
+        <div class="feedback-card-meta-item">
+          <span class="feedback-card-meta-label">User Email</span>
+          <span>${it.user_email || 'N/A'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="feedback-card-toggle">▼</div>
+  </div>
+  
+  <div class="feedback-card-answer">
+    <div class="feedback-card-answer-label">Chatbot Answer</div>
+    <div class="feedback-card-answer-text">${it.chatbot_response || 'No response available'}</div>
+  </div>
 </div>`;
     container.innerHTML += cardHTML;
+  });
+  
+  // Add click listeners to expand/collapse cards
+  document.querySelectorAll('.feedback-card').forEach(card => {
+    card.addEventListener('click', function() {
+      this.classList.toggle('expanded');
+    });
   });
 }
 
@@ -1553,7 +1744,14 @@ async function sendManualResponse() {
 }
 
 function toggleTheme() {
-  document.body.classList.toggle('dark-mode');
+  // Toggle the light-theme class on the body
+  document.body.classList.toggle('light-theme');
+  
+  // Save the preference to localStorage
+  const isLightTheme = document.body.classList.contains('light-theme');
+  localStorage.setItem('adminTheme', isLightTheme ? 'light' : 'dark');
+  
+  // Redraw charts if feedback data exists
   if (feedbackData && feedbackData.items) {
     updateConfidenceChart(feedbackData.items);
   }
