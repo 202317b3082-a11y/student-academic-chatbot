@@ -15,38 +15,34 @@ A Flask-based intelligent chatbot system designed to answer student queries abou
 
 ```
 StudentAcademicChatbot/
-├── public/                          # Frontend files
-│   ├── ChatUI.html                 # Chat interface
-│   ├── admin.html                  # Admin dashboard
+├── public/                          # Front‑end (HTML/CSS/JS)
+│   ├── ChatUI.html                 # Chat interface for students
+│   ├── admin.html                  # Admin dashboard UI
 │   ├── login.html                  # Login page
-│   └── signup.html                 # Signup page
-├── faiss_index/                    # Main knowledge base vector index
-│   ├── index.faiss
-│   └── index.pkl
-├── faiss_feedback_index/           # Feedback vector index
-│   ├── index.faiss
-│   └── index.pkl
-├── __pycache__/                    # Python cache
-├── flask_app.py                    # Main Flask application
-├── logic_response.py               # NLP query processing logic
-├── suggestion.py                   # Query suggestion engine
-├── feedback_embedding.py           # Feedback embedding generator
-├── evaluation.py                   # Response evaluation metrics
-├── db.py                           # Database operations (SQLite)
-├── create_embedding.py             # Script to create KB embeddings
-├── create_admin.py                 # Script to create admin user
-├── college_policy.txt              # Knowledge base (English)
-├── feedback.csv                    # User feedback storage
-├── users.db                        # SQLite database
+│   └── signup.html                 # Sign‑up page
+├── flask_app.py                    # Flask app, routes, JWT authentication
+├── logic_response.py               # Core query processing & FAISS search
+├── suggestion.py                   # Suggestion engine (feedback index)
+├── feedback_embedding.py           # Generates embeddings for feedback data
+├── evaluation.py                   # Evaluation metrics and scripts
+├── db.py                           # SQLite wrapper for users.db
+├── create_embedding.py             # Builds main knowledge‑base FAISS index
+├── create_admin.py                 # Creates initial admin account
+├── college_policy.txt              # Knowledge‑base source document
+├── users.db                        # SQLite database for user accounts
+├── feedback.csv                    # Logged user feedback
+├── faiss_index/                    # Primary FAISS index (index.faiss, index.pkl)
+├── faiss_feedback_index/           # Feedback FAISS index (index.faiss, index.pkl)
 ├── requirements.txt                # Python dependencies
-└── README.md                       # This file
+├── __pycache__/                    # Python bytecode cache
+├── hf_cache/                       # HuggingFace model cache
+└── README.md                       # Project documentation
 ```
 
 ## Prerequisites
 
 - **Python**: 3.8 or higher
 - **pip**: Python package manager
-- **Virtual Environment**: Recommended for dependency isolation
 
 ## Installation Steps
 
@@ -54,45 +50,25 @@ StudentAcademicChatbot/
 
 ```bash
 # Navigate to your workspace
-cd d:\prabh\New folder (3)\StudentAcademicChatbot
+cd d:\prabh\collage-ai-main
 ```
 
-### 2. Create a Python Virtual Environment
-
-**Windows (PowerShell):**
-```powershell
-python -m venv venv
-.\\venv\\Scripts\\Activate.ps1
-```
-
-**Windows (Command Prompt):**
-```cmd
-python -m venv venv
-venv\Scripts\activate
-```
-
-**macOS/Linux:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
+### 2. Install Dependencies (no virtual environment required)
 
 ```bash
 pip install -r requirements.txt
 ```
 
-This will install all required packages with their specific versions:
-- Flask & Flask-CORS: Web framework and cross-origin support
+The following packages will be installed by `pip`:
+
+- Flask & Flask‑CORS: Web framework and cross‑origin support
 - PyJWT: JWT authentication tokens
 - Werkzeug: Security utilities
 - LangChain: LLM orchestration framework
 - FAISS: Vector similarity search
-- Sentence-Transformers: Embedding generation (using all-MiniLM-L6-v2)
+- Sentence‑Transformers: Embedding generation (all‑MiniLM‑L6‑v2)
 - PyTorch: Deep learning framework (required by transformers)
 - Pandas & NumPy: Data processing
-
 ### 4. Initialize the Knowledge Base (One-time Setup)
 
 Generate embeddings from the college policy file:
@@ -218,7 +194,7 @@ The project uses **sentence-transformers/all-MiniLM-L6-v2** for generating seman
 **Solution**: Run `python create_embedding.py` to generate the knowledge base embeddings.
 
 ### Issue: "ModuleNotFoundError: No module named 'langchain'"
-**Solution**: Ensure virtual environment is activated and dependencies are installed:
+**Solution**: Ensure dependencies are installed:
 ```bash
 pip install -r requirements.txt
 ```

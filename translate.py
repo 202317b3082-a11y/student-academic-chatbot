@@ -2,7 +2,7 @@ from sarvamai import SarvamAI
 
 # Initialize client
 client = SarvamAI(
-    api_subscription_key="your api key",
+    api_subscription_key="sk_fm3qm7nr_fRfha3W00NIXikJR80tdK65V",
 )
 
 # Language mapping - from friendly names/codes to API language codes

@@ -1,0 +1,111 @@
+# Project Features Overview
+
+This document provides a detailed description of all the core and auxiliary features offered by the **Student Academic Chatbot** project.
+
+---
+
+## 1. User Authentication (JWT‑Based)
+- Secure sign‑up and login flows using **email** and **password**.
+- Passwords are hashed before storage in the SQLite `users.db`.
+- Upon successful login a **JSON Web Token (JWT)** is issued, stored client‑side and sent with every protected request.
+- Tokens have a configurable expiry (default 2 hours) and can be refreshed by re‑logging in.
+- Role information (student vs. admin) is embedded in the token payload, enabling role‑based routing.
+
+---
+
+## 2. Multi‑Role Support (Student & Admin)
+- **Students** get access to the chat UI (`ChatUI.html`) where they can ask queries about college policies.
+- **Admins** are redirected to the admin dashboard (`admin.html`) after login, granting them additional privileges:
+  - Manage registered users (view, promote/demote roles).
+  - Update the knowledge‑base documents (e.g., `college_policy.txt`).
+  - View analytics on feedback and response quality.
+- Role differentiation is enforced server‑side using the JWT claims.
+
+---
+
+## 3. Admin Dashboard
+- Built with plain HTML/CSS/JS, served from the `public/` folder.
+- Provides UI for:
+  - Listing all users with their roles.
+  - Editing user roles (POST `/user/<email>/role`).
+  - Uploading or editing the knowledge‑base text files.
+  - Visualising feedback statistics (positive/negative counts, average confidence scores).
+
+---
+
+## 4. NLP‑Powered Semantic Search (FAISS + Sentence‑Transformers)
+- Knowledge base (`college_policy.txt`) is transformed into dense embeddings using **sentence‑transformers/all‑MiniLM‑L6‑v2**.
+- Embeddings are indexed with **FAISS** for efficient cosine‑similarity search.
+- At query time, the user question is embedded and the most similar passages are retrieved from the FAISS index.
+- This enables the chatbot to understand paraphrased or loosely‑worded questions.
+
+---
+
+## 5. Query Suggestion Engine
+- Historical user queries and feedback are also embedded and stored in a separate FAISS index (`faiss_feedback_index`).
+- When a new query arrives, the system retrieves the top‑k similar past queries and presents them as **suggestions** to the user.
+- This helps users refine their questions and provides context for the chatbot.
+
+---
+
+## 6. Feedback System & Continuous Learning
+- After each chatbot response, the UI prompts the user to provide **positive** or **negative** feedback.
+- Feedback (question, response, rating) is logged in `feedback.csv` and also added to the feedback FAISS index (via `feedback_embedding.py`).
+- Administrators can periodically re‑run the feedback embedding script to improve suggestion relevance.
+
+---
+
+## 7. Response Evaluation Metrics
+- The `evaluation.py` script computes quantitative metrics such as:
+  - **Confidence scores** returned by the LLM.
+  - **Precision/Recall** based on a held‑out set of example Q&A pairs.
+  - Overall **feedback satisfaction rate**.
+- These metrics help gauge chatbot performance and guide future improvements.
+
+---
+
+## 8. Database Layer (SQLite)
+- `users.db` stores user credentials, roles, and timestamps.
+- `feedback.csv` stores raw feedback data; it can be imported into a pandas DataFrame for analysis.
+- The lightweight SQLite backend keeps the project easy to set up without external services.
+
+---
+
+## 9. RESTful API Endpoints
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/signup` | POST | Register a new user |
+| `/login`  | POST | Authenticate and receive JWT |
+| `/logout` | GET  | Invalidate session (client‑side only) |
+| `/me`     | GET  | Retrieve current user info from token |
+| `/chat`   | POST | Submit a question, receive answer + suggestions |
+| `/feedback` | POST | Submit positive/negative feedback |
+| `/admin`  | GET  | Access admin dashboard (role‑protected) |
+| `/users`  | GET  | List all users (admin only) |
+| `/user/<email>/role` | POST | Change a user's role (admin only) |
+
+---
+
+## 10. Configuration & Extensibility
+- Central configuration lives in `flask_app.py` (secret key, JWT expiry, debug mode).
+- Environment variables can be loaded from a `.env` file for production‑grade secret management.
+- Adding new knowledge‑base documents is straightforward: place a `.txt` file in the root and run `create_embedding.py` to rebuild the FAISS index.
+- The architecture cleanly separates **frontend** (`public/`), **backend** (`flask_app.py`), **logic** (`logic_response.py`), and **data** (SQLite/CSV) layers, making future feature expansion simple.
+
+---
+
+## 11. Performance Optimisations
+- Optional GPU support for embedding generation via a CUDA‑enabled PyTorch install.
+- Development mode runs with `debug=True`; production deployments should use a WSGI server like **Gunicorn**.
+- Caching of model files in the `hf_cache/` directory prevents repeated downloads.
+
+---
+
+## 12. Testing & Quality Assurance
+- `evaluation.py` provides automated testing of response quality.
+- Unit tests can be added to verify API routes, authentication flow, and database operations.
+- Logging is printed to the console; can be redirected to a file for CI pipelines.
+
+---
+
+*This file is intended to give developers, contributors, and stakeholders a comprehensive picture of the system’s capabilities and the underlying mechanisms that enable them.*
