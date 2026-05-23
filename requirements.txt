@@ -15,6 +15,7 @@ langchain-huggingface
 
 
 sarvamai
+python-dotenv
 
 # Data Processing
 pandas

@@ -239,6 +239,7 @@ Create a `.env` file for sensitive configuration:
 FLASK_SECRET_KEY=your-secret-key
 JWT_EXPIRY_HOURS=2
 DEBUG=True
+SARVAMAI_API_KEY=your_sarvam_ai_api_key_here
 ```
 
 ## Development Notes

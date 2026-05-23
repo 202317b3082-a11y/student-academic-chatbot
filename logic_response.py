@@ -1,48 +1,53 @@
-import json
 import os
-
-# ✅ FORCE OFFLINE MODE (VERY IMPORTANT)
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
-
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-
+# ================= CONFIG =================
 FAISS_DIR = "faiss_index"
 POLICY_FILE = "college_policy.txt"
 
-# ================= LOCAL LLM =================
-print("🧠 Loading local LLM (FAST MODE)...")
+MODEL_NAME = "google/flan-t5-small"  # fast model
+MODEL_DIR = "models/flan-t5-small"
 
-MODEL_NAME = "google/flan-t5-base"
-# 👉 If slow, use:
-# MODEL_NAME = "google/flan-t5-small"
+# ================= MODEL SETUP =================
+def setup_model():
+    print("🧠 Checking model...")
 
-tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME,
-    local_files_only=True
-)
+    if not os.path.exists(MODEL_DIR):
+        print("⬇️ Model not found. Downloading...")
 
-model = AutoModelForSeq2SeqLM.from_pretrained(
-    MODEL_NAME,
-    local_files_only=True
-)
+        os.makedirs(MODEL_DIR, exist_ok=True)
+
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
+
+        tokenizer.save_pretrained(MODEL_DIR)
+        model.save_pretrained(MODEL_DIR)
+
+        print("✅ Model downloaded & saved")
+
+    else:
+        print("✅ Using local model")
+
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, local_files_only=True)
+    model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_DIR, local_files_only=True)
+
+    return tokenizer, model
 
 
+# ================= GENERATE ANSWER =================
 def generate_answer(query, context):
     prompt = f"""
 You are an academic assistant chatbot.
 
-Read the context carefully and answer the question using ONLY the given context.
+Answer the question using ONLY the provided context.
 
-Instructions:
-- Write an answer between 50 to 60 words.
-- Provide a clear, complete, and informative explanation.
-- Do not include any information not present in the context.
-- Avoid repetition and unnecessary words.
-- Keep the answer precise and easy to understand.
+Rules:
+- Answer must be between 50 to 60 words
+- Be clear and complete
+- Do not use outside knowledge
+- Avoid repetition
 
 Context:
 {context}
@@ -62,17 +67,16 @@ Answer:
 
     outputs = model.generate(
         **inputs,
-
-        max_new_tokens=110,       # slightly higher → more complete answers
-        min_new_tokens=60,        # ensures proper length
+        max_new_tokens=220,
+        min_new_tokens=50,
         do_sample=True,
-        temperature=0.7,          # 🔧 slightly lower → more stable
+        temperature=0.6,
         top_p=0.9,
-        no_repeat_ngram_size=3,   # ✅ prevents repetition (VERY IMPORTANT)
-        num_beams=1
+        no_repeat_ngram_size=3,
+        num_beams=2
     )
 
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
 
 # ================= EMBEDDINGS =================
@@ -99,90 +103,80 @@ def load_policy_paragraphs():
     if not os.path.exists(POLICY_FILE):
         return []
 
-    with open(POLICY_FILE, 'r', encoding='utf-8') as f:
+    with open(POLICY_FILE, "r", encoding="utf-8") as f:
         content = f.read()
 
-    paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
-    return paragraphs
-
-
-# ================= INIT =================
-print("📦 Loading embeddings & FAISS...")
-
-embeddings = get_embeddings()
-vectorstore = load_vectorstore(embeddings)
-policy_paragraphs = load_policy_paragraphs()
+    return [p.strip() for p in content.split("\n\n") if p.strip()]
 
 
 # ================= CONFIDENCE =================
-def similarity_to_confidence(score: float) -> float:
+def similarity_to_confidence(score):
     confidence = 100 / (1 + score * 0.3)
-    return max(0.0, min(100.0, confidence))
+    return max(0, min(100, confidence))
 
 
-# ================= FIND FULL PARAGRAPH =================
-def find_full_paragraph(chunk_text: str) -> str:
+# ================= PARAGRAPH MATCH =================
+def find_full_paragraph(chunk_text):
     for para in policy_paragraphs:
         if chunk_text in para or para in chunk_text:
             return para
     return chunk_text
 
 
-# ================= MAIN NLP FUNCTION =================
-def nlpcall(query: str) -> dict:
-    results = vectorstore.similarity_search_with_score(query, k=1)
+# ================= INIT =================
+print("🚀 Initializing...")
+
+tokenizer, model = setup_model()
+
+print("📦 Loading embeddings & FAISS...")
+embeddings = get_embeddings()
+vectorstore = load_vectorstore(embeddings)
+policy_paragraphs = load_policy_paragraphs()
+
+
+# ================= ✅ YOUR SAME FUNCTION =================
+def nlpcall(query):
+    results = vectorstore.similarity_search_with_score(query, k=2)
 
     if not results:
-        return {
-            "response": ["No relevant answer found"],
-            "confidence": 0.0
-        }
+        return {"response": ["No relevant answer found"], "confidence": 0.0}
 
     confidences = []
-    responses = []
+    context = ""
 
     for doc, score in results:
-        confidence = similarity_to_confidence(score)
-        confidences.append(confidence)
+        confidences.append(similarity_to_confidence(score))
+        context += find_full_paragraph(doc.page_content) + "\n\n"
 
-        # ✅ full paragraph
-        full_para = find_full_paragraph(doc.page_content)
-
-        # ✅ LLM output
-        answer = generate_answer(query, full_para)
-
-        responses.append(answer)
-
-    overall_confidence = sum(confidences) / len(confidences)
+    answer = generate_answer(query, context)
 
     return {
-        "response": responses,
-        "confidence": round(overall_confidence, 2)
+        "response": [answer],
+        "confidence": round(sum(confidences) / len(confidences), 2)
     }
 
 
 # ================= CLI =================
 if __name__ == "__main__":
-    print("\n🎓 Academic Chatbot (FAST Local RAG)")
-    print("=" * 50)
-    print("Type 'exit' to quit\n")
+    print("\n🎓 Academic Chatbot (Auto Download + Offline)")
+    print("=" * 60)
 
     while True:
-        q = input("Ask: ").strip()
+        query = input("\nAsk: ").strip()
 
-        if q.lower() == "exit":
+        if query.lower() == "exit":
             print("👋 Exiting...")
             break
 
-        if not q:
+        if not query:
             continue
 
-        result = nlpcall(q)
+        result = nlpcall(query)
 
-        print(f"\n📊 Confidence: {result['confidence']}")
+        print(f"\n📊 Confidence: {result['confidence']}%")
         print("\n✅ Response:\n")
 
-        for resp in result['response']:
+        for resp in result["response"]:
             print(resp)
 
-        print("\n" + "=" * 50 + "\n")
+        print("\n" + "=" * 60)

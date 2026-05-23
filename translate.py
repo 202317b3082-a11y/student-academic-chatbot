@@ -1,8 +1,12 @@
+import os
+from dotenv import load_dotenv
 from sarvamai import SarvamAI
+
+load_dotenv()
 
 # Initialize client
 client = SarvamAI(
-    api_subscription_key="your api key",
+    api_subscription_key=os.getenv("SARVAMAI_API_KEY"),
 )
 
 # Language mapping - from friendly names/codes to API language codes
