@@ -1,111 +1,338 @@
-# Project Features Overview
+=================================================================
+Student Academic Chatbot — Detailed Feature Catalogue
+=================================================================
 
-This document provides a detailed description of all the core and auxiliary features offered by the **Student Academic Chatbot** project.
+This document enumerates every feature implemented in the repository and describes
+each feature with purpose, internal behaviour, inputs, outputs, dependencies,
+related files and notes on validations, fallback behavior and edge cases.
 
----
+Format for each feature:
+ - Feature Name
+ - Description
+ - Purpose
+ - Functionality / Flow
+ - Inputs
+ - Outputs
+ - Dependencies
+ - Related Files
+ - Edge cases / Validations / Fallbacks
 
-## 1. User Authentication (JWT‑Based)
-- Secure sign‑up and login flows using **email** and **password**.
-- Passwords are hashed before storage in the SQLite `users.db`.
-- Upon successful login a **JSON Web Token (JWT)** is issued, stored client‑side and sent with every protected request.
-- Tokens have a configurable expiry (default 2 hours) and can be refreshed by re‑logging in.
-- Role information (student vs. admin) is embedded in the token payload, enabling role‑based routing.
+-----------------------------------------------------------------
 
----
+Feature: User Authentication (Signup / Login / JWT)
+Description: Email/password based user registration and login with JWT stored
+  in an HTTP cookie. Passwords are hashed before storage.
+Purpose: Provide secure, sessionless authentication and role claims for
+  access control between student and admin flows.
+Functionality / Flow:
+ - `POST /signup` accepts name, email, mobile, password → hashes password → stores
+   user row in SQLite `users.db` with role `student`.
+ - `POST /login` validates credentials (password hash check), issues JWT with
+   `email`, `role`, and expiry claim, sets `access_token` cookie.
+ - `jwt_required` decorator extracts cookie, decodes JWT and attaches `request.user`.
+ - `admin_required` decorator checks `request.user['role'] == 'admin'`.
+Inputs:
+ - Signup: name, email, mobile, password (JSON body).
+ - Login: email, password (JSON body).
+Outputs:
+ - On login: JSON including `redirect_url` and `user` object; cookie `access_token`.
+ - On protected endpoints: 401/redirect if missing/invalid token; 403 if not admin.
+Dependencies:
+ - `flask`, `PyJWT`, `werkzeug.security` (password hashing utilities), `sqlite3`.
+Related Files:
+ - `flask_app.py` (routes and decorators), `db.py` (user persistence), `public/login.html`, `public/signup.html`
+Edge cases / Validations / Fallbacks:
+ - Signup returns 400 when required fields missing or 400 if email already exists.
+ - Login returns 401 on invalid credentials.
+ - JWT expiry controlled by `app.config['JWT_EXPIRY_HOURS']` (default 2).
 
-## 2. Multi‑Role Support (Student & Admin)
-- **Students** get access to the chat UI (`ChatUI.html`) where they can ask queries about college policies.
-- **Admins** are redirected to the admin dashboard (`admin.html`) after login, granting them additional privileges:
-  - Manage registered users (view, promote/demote roles).
-  - Update the knowledge‑base documents (e.g., `college_policy.txt`).
-  - View analytics on feedback and response quality.
-- Role differentiation is enforced server‑side using the JWT claims.
+-----------------------------------------------------------------
 
----
+Feature: Role‑Based UI Routing (Student vs Admin)
+Description: Clients are redirected to different UI pages based on the `role` claim
+  in the JWT issued at login.
+Purpose: Provide separate experiences (chat for students, admin dashboard for admins).
+Functionality / Flow:
+ - Server determines redirect URL during login and returns it in the login response.
+Inputs: Login request (email/password).
+Outputs: JSON with `redirect_url` (`/chat` or `/admin`).
+Dependencies: `db.py`, `flask_app.py`, frontend pages in `public/`.
+Related Files: `flask_app.py`, `public/ChatUI.html`, `public/admin.html`
+Edge cases:
+ - Role is loaded from DB; if missing or corrupted token, access is denied.
 
-## 3. Admin Dashboard
-- Built with plain HTML/CSS/JS, served from the `public/` folder.
-- Provides UI for:
-  - Listing all users with their roles.
-  - Editing user roles (POST `/user/<email>/role`).
-  - Uploading or editing the knowledge‑base text files.
-  - Visualising feedback statistics (positive/negative counts, average confidence scores).
+-----------------------------------------------------------------
 
----
+Feature: Knowledge Base (KB) Management — CRUD via Admin APIs
+Description: Admins can list, add, update and delete KB sections stored as plain text
+  files (`college_policy.txt` and `college_policy_hi.txt`).
+Purpose: Let admins maintain the policy document used as the primary knowledge base.
+Functionality / Flow:
+ - `GET /admin/kb` returns KB parts (split by double newlines) with optional `q` query search.
+ - `POST /admin/kb` appends a new paragraph to the KB file.
+ - `PUT /admin/kb/<id>` updates the paragraph at index `<id>`.
+ - `DELETE /admin/kb/<id>` removes the paragraph at index `<id>`.
+Inputs: JSON payloads with `text` and optional `lang` param (en/hi), item id in path.
+Outputs: Success messages or updated lists; 404 if KB missing or item not found.
+Dependencies: File I/O, Flask decorators for admin protection.
+Related Files: `flask_app.py`, `college_policy.txt`, `college_policy_hi.txt`
+Edge cases / Validations:
+ - Missing KB file → 404 responses.
+ - Index bounds checked; invalid index → 404.
 
-## 4. NLP‑Powered Semantic Search (FAISS + Sentence‑Transformers)
-- Knowledge base (`college_policy.txt`) is transformed into dense embeddings using **sentence‑transformers/all‑MiniLM‑L6‑v2**.
-- Embeddings are indexed with **FAISS** for efficient cosine‑similarity search.
-- At query time, the user question is embedded and the most similar passages are retrieved from the FAISS index.
-- This enables the chatbot to understand paraphrased or loosely‑worded questions.
+-----------------------------------------------------------------
 
----
+Feature: Embedding Generation (Primary KB)
+Description: Convert `college_policy.txt` into embedding vectors and save a FAISS index.
+Purpose: Enable semantic retrieval for user queries using a vector store.
+Functionality / Flow:
+ - `create_embedding.py` loads the text, splits it into chunks (default 500 chars with overlap 50),
+   computes embeddings using `sentence-transformers/all-MiniLM-L6-v2` (via LangChain HuggingFace integration),
+   builds a FAISS vectorstore and saves locally into `faiss_index/`.
+ - Admin can trigger this via `POST /admin/generate-embeddings/policy` which runs the script.
+Inputs: Source file path (default `college_policy.txt`).
+Outputs: Local FAISS directory `faiss_index/` and associated metadata.
+Dependencies: `langchain_community.vectorstores.FAISS`, `langchain_huggingface.HuggingFaceEmbeddings`, local model cache `hf_cache/`.
+Related Files: `create_embedding.py`, `flask_app.py` (admin trigger), `faiss_index/` directory
+Edge cases / Notes:
+ - Model caching configured via `CACHE_DIR` to avoid re-downloads.
+ - The splitting strategy is simple char-based chunking; large docs may create many chunks.
 
-## 5. Query Suggestion Engine
-- Historical user queries and feedback are also embedded and stored in a separate FAISS index (`faiss_feedback_index`).
-- When a new query arrives, the system retrieves the top‑k similar past queries and presents them as **suggestions** to the user.
-- This helps users refine their questions and provides context for the chatbot.
+-----------------------------------------------------------------
 
----
+Feature: Feedback Embeddings & Suggestion Index
+Description: Build/update a FAISS index from recorded user queries in `feedback.csv`.
+Purpose: Provide suggested similar past questions to users and allow admins to analyse historical queries.
+Functionality / Flow:
+ - `feedback_embedding.py` reads `feedback.csv`, extracts `user_query` rows, creates `Document` objects,
+   computes embeddings (same model) and either creates or updates `faiss_feedback_index/`.
+ - `suggestion.py` uses the feedback FAISS index at runtime to return similar past queries (hint list).
+Inputs: `feedback.csv` (CSV with `user_query` field).
+Outputs: `faiss_feedback_index/` saved on disk.
+Dependencies: `pandas`, `langchain_community.FAISS`, `langchain_community.embeddings.HuggingFaceEmbeddings`.
+Related Files: `feedback_embedding.py`, `suggestion.py`, `feedback.csv`, `faiss_feedback_index/`
+Edge cases / Fallbacks:
+ - If FAISS feedback index is not present, `suggestion.hint()` falls back to substring matches on `feedback.csv`.
+ - Empty or missing CSV → graceful message and abort.
 
-## 6. Feedback System & Continuous Learning
-- After each chatbot response, the UI prompts the user to provide **positive** or **negative** feedback.
-- Feedback (question, response, rating) is logged in `feedback.csv` and also added to the feedback FAISS index (via `feedback_embedding.py`).
-- Administrators can periodically re‑run the feedback embedding script to improve suggestion relevance.
+-----------------------------------------------------------------
 
----
+Feature: Chat Processing — Semantic Retrieval + Local LLM Answering
+Description: Core query pipeline: embed incoming user query → retrieve top passages from KB FAISS →
+  use local Flan‑T5 model to generate a concise answer constrained to the retrieved context.
+Purpose: Answer student queries using authoritative policy text; produce confidence score.
+Functionality / Flow:
+ - `POST /chat` receives message and language code. JWT authentication enforced.
+ - Optional translation: If user language != English, translates to English via `translate.translate_to_english()`.
+ - Passes English query to `nlpcall()` (in `logic_response.py`).
+ - `nlpcall()` performs FAISS similarity search (k=2), converts scores → confidence, stitches context, and
+   calls `generate_answer()` to prompt local `flan-t5-small` with rules (50–60 words, use only provided context).
+ - If confidence < 70 (or configured), question is logged to `low_confidence_questions.csv` and a friendly fallback
+   response is returned (unless `hide_low_confidence` admin setting is enabled).
+ - Response is optionally translated back to user language with `translate.translate_from_english()`.
+Inputs:
+ - JSON body: `{ "message": "...", "language": "English|Hindi|..." }` and valid JWT cookie.
+Outputs:
+ - JSON: `{ response: [..], confidence: <float>, confidence_score: <float>, hint: <html|string>, user: <email>, detected_language: <lang> }`.
+Dependencies:
+ - `transformers` (local Flan‑T5 model saved in `models/flan-t5-small`), `langchain_huggingface` embeddings, `FAISS`, `translate.py`.
+Related Files:
+ - `flask_app.py` (route and translation orchestration), `logic_response.py` (nlp pipeline), `translate.py` (SarvamAI wrapper), `suggestion.py` (hint provider)
+Edge cases / Validations / Fallbacks:
+ - Translation errors: translation functions return `success` flag; on failure the original text is used.
+ - If `nlpcall()` raises, the route returns a generic apology message and confidence 0.
+ - If no FAISS index present, `logic_response.load_vectorstore()` raises an exception and the chat will error — README documents running `create_embedding.py`.
 
-## 7. Response Evaluation Metrics
-- The `evaluation.py` script computes quantitative metrics such as:
-  - **Confidence scores** returned by the LLM.
-  - **Precision/Recall** based on a held‑out set of example Q&A pairs.
-  - Overall **feedback satisfaction rate**.
-- These metrics help gauge chatbot performance and guide future improvements.
+-----------------------------------------------------------------
 
----
+Feature: Translation Service Integration (SarvamAI wrapper)
+Description: Wrapper around `SarvamAI` client for translating user input to English and answers back to the user's language.
+Purpose: Enable multilingual support for input and output.
+Functionality / Flow:
+ - `translate_to_english(text, source_lang)` converts user input to English.
+ - `translate_from_english(content, target_lang)` converts model responses back to target language. Handles string or dict (nlp response) inputs.
+ - Language map normalises friendly names to API codes.
+Inputs:
+ - `text` string and `source_lang` / `target_lang` name or code.
+Outputs:
+ - Dict with `success`, `translated_text`, `source_language`, `target_language`, optional `error`.
+Dependencies:
+ - `sarvamai` client, `.env` containing `SARVAMAI_API_KEY` (see `.env`).
+Related Files:
+ - `translate.py`, `test_translation.py`, `.env`
+Edge cases / Fallbacks:
+ - Any exception from the API is caught and returned as `success: False` and original text preserved.
+ - `translate_from_english` reconstructs lists if the original response was a list (joins/splits on newline).
 
-## 8. Database Layer (SQLite)
-- `users.db` stores user credentials, roles, and timestamps.
-- `feedback.csv` stores raw feedback data; it can be imported into a pandas DataFrame for analysis.
-- The lightweight SQLite backend keeps the project easy to set up without external services.
+-----------------------------------------------------------------
 
----
+Feature: Suggestion / Hint Engine
+Description: Returns a small HTML‑formatted list of similar past queries (with optional scores/email attribution).
+Purpose: Help users by surfacing past similar questions and provide context to the chatbot answer.
+Functionality / Flow:
+ - If `faiss_feedback_index` exists: run `similarity_search_with_score` and return top k results as `<ul><li>...</li></ul>`.
+ - Else: fallback searches `feedback.csv` for substring matches and returns HTML list with the originating email.
+Inputs: Query string
+Outputs: HTML snippet (string) containing `<ul>` of items or empty string.
+Dependencies: `suggestion.py`, `feedback.csv`, FAISS feedback index if present.
+Related Files: `suggestion.py`, `feedback.csv`, `faiss_feedback_index/`
+Edge cases:
+ - If FAISS load fails, code silently falls back to CSV search.
 
-## 9. RESTful API Endpoints
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/signup` | POST | Register a new user |
-| `/login`  | POST | Authenticate and receive JWT |
-| `/logout` | GET  | Invalidate session (client‑side only) |
-| `/me`     | GET  | Retrieve current user info from token |
-| `/chat`   | POST | Submit a question, receive answer + suggestions |
-| `/feedback` | POST | Submit positive/negative feedback |
-| `/admin`  | GET  | Access admin dashboard (role‑protected) |
-| `/users`  | GET  | List all users (admin only) |
-| `/user/<email>/role` | POST | Change a user's role (admin only) |
+-----------------------------------------------------------------
 
----
+Feature: Feedback Capture Endpoint
+Description: Endpoint that appends user feedback rows to `feedback.csv` including timestamp, user_query, chatbot_response, feedback, user_email, confidence_score.
+Purpose: Persist user evaluation signals for offline analysis and building the feedback index.
+Functionality / Flow:
+ - `POST /feedback` stores a row in `feedback.csv` with current UTC timestamp and `request.user['email']`.
+Inputs: JSON body containing `user_query`, `bot_response`, `is_helpful`/`feedback`, `confidence_score`.
+Outputs: JSON `{message: 'Feedback saved successfully'}` on success.
+Dependencies: CSV file operations, `flask_app.py` route.
+Related Files: `flask_app.py`, `feedback.csv`, `feedback_embedding.py`
+Edge cases:
+ - File created with header if missing; robust to missing fields in input.
 
-## 10. Configuration & Extensibility
-- Central configuration lives in `flask_app.py` (secret key, JWT expiry, debug mode).
-- Environment variables can be loaded from a `.env` file for production‑grade secret management.
-- Adding new knowledge‑base documents is straightforward: place a `.txt` file in the root and run `create_embedding.py` to rebuild the FAISS index.
-- The architecture cleanly separates **frontend** (`public/`), **backend** (`flask_app.py`), **logic** (`logic_response.py`), and **data** (SQLite/CSV) layers, making future feature expansion simple.
+-----------------------------------------------------------------
 
----
+Feature: Low Confidence Logging and Admin Review
+Description: Questions with low retrieval/model confidence (< 70) are appended to `low_confidence_questions.csv` for admin review.
+Purpose: Track problematic queries requiring dataset improvement or admin intervention.
+Functionality / Flow:
+ - Every chat request writes the user question and computed confidence to `low_confidence_questions.csv`.
+ - Admin route `GET /admin/low_confidence` returns the CSV contents.
+Inputs: Internal from chat processing (user email, question, confidence).
+Outputs: CSV file and admin JSON view.
+Related Files: `flask_app.py`, `low_confidence_questions.csv`
+Edge cases:
+ - Admin can disable low confidence fallback responses using `admin_settings.json` (`hide_low_confidence`).
 
-## 11. Performance Optimisations
-- Optional GPU support for embedding generation via a CUDA‑enabled PyTorch install.
-- Development mode runs with `debug=True`; production deployments should use a WSGI server like **Gunicorn**.
-- Caching of model files in the `hf_cache/` directory prevents repeated downloads.
+-----------------------------------------------------------------
 
----
+Feature: Manual Admin Responses (Response DB)
+Description: Admins can create manual responses to users which are saved to a lightweight `response.db` SQLite database.
+Purpose: Allow staff to respond directly to unresolved questions or provide curated answers.
+Functionality / Flow:
+ - `db.init_responses_db()` ensures table `admin_responses` exists.
+ - `POST /admin/manual-response` saves a manual response with `user_email`, `question`, and `response`.
+ - `GET /user/responses` returns responses for the logged in user.
+ - `DELETE /user/response/<id>` allows users to delete their own saved responses.
+Inputs: JSON with `user_email`, `question`, `response`.
+Outputs: DB rows in `response.db` and JSON confirmation.
+Dependencies: `sqlite3`, `db.py` helpers.
+Related Files: `db.py`, `flask_app.py`, `response.db` (created on demand)
+Edge cases:
+ - Only the owner can delete their response (checked by `user_email` in delete query).
 
-## 12. Testing & Quality Assurance
-- `evaluation.py` provides automated testing of response quality.
-- Unit tests can be added to verify API routes, authentication flow, and database operations.
-- Logging is printed to the console; can be redirected to a file for CI pipelines.
+-----------------------------------------------------------------
 
----
+Feature: FAQs Management (CRUD)
+Description: Admins can add/update/remove entries in `faqs.json`; authenticated users can retrieve the FAQ list.
+Purpose: Surface curated, static question/answer pairs without performing semantic search.
+Functionality / Flow:
+ - `GET /faqs` (protected) returns all FAQs.
+ - `POST /admin/faqs` adds an FAQ; `PUT` and `DELETE` update or remove by index.
+Inputs: JSON with `question` and `answer`.
+Outputs: Updated `faqs.json` persisted to disk.
+Dependencies: File I/O, JSON parsing.
+Related Files: `flask_app.py`, `faqs.json`
+Edge cases:
+ - Index bounds checked; missing file → empty list; malformed JSON errors are caught and returned.
 
-*This file is intended to give developers, contributors, and stakeholders a comprehensive picture of the system’s capabilities and the underlying mechanisms that enable them.*
+-----------------------------------------------------------------
+
+Feature: Local LLM Model Management
+Description: Uses a local `flan-t5-small` model for controlled answer generation; the repo keeps a `models/` folder to store the model so the app can run offline.
+Purpose: Produce concise answers constrained to retrieved context without relying on remote LLMs.
+Functionality / Flow:
+ - At startup `logic_response.setup_model()` verifies `models/flan-t5-small` exists; if not, it downloads from HuggingFace and saves locally.
+ - The model tokenizer and weights are loaded from `models/flan-t5-small` with `local_files_only=True`.
+Inputs: Query prompt (constructed with context in `generate_answer`).
+Outputs: Generated text returned to `nlpcall()` and forwarded to `flask_app.py`.
+Dependencies: `transformers`, `torch`, local filesystem for `models/flan-t5-small`.
+Related Files: `logic_response.py`, `models/flan-t5-small/` directory
+Edge cases:
+ - If model download is needed the startup will attempt to fetch weights — network required on first run.
+
+-----------------------------------------------------------------
+
+Feature: Evaluation & Metrics
+Description: Offline evaluation tools compute confusion matrix components (TP/FP/TN/FN) and derived metrics (accuracy, precision, recall, F1) from `feedback.csv` using a confidence threshold.
+Purpose: Quantify system performance using human feedback as ground truth.
+Functionality / Flow:
+ - `evaluation.evaluate()` parses `feedback.csv` and determines actual label from `feedback` column (`yes`/`no`).
+ - Predicted label comes from `confidence_score >= CONFIDENCE_THRESHOLD` (default 0.70).
+ - `evaluation.metrics()` converts confusion counts into rounded accuracy/precision/recall/F1.
+Inputs: `feedback.csv` rows with `feedback` and `confidence_score` fields.
+Outputs: Dicts with counts and rounded metrics.
+Dependencies: `csv`, `os`.
+Related Files: `evaluation.py`, `feedback.csv`, `flask_app.py` (admin report endpoint uses evaluate + metrics)
+Edge cases:
+ - Missing or malformed confidence values are treated as 0. Unknown feedback tokens are skipped.
+
+-----------------------------------------------------------------
+
+Feature: Admin Utilities (Generate Embeddings, Settings)
+Description: Admin endpoints to trigger embedding scripts and to get/set admin settings persisted in `admin_settings.json`.
+Purpose: Provide operational controls for maintainers from the UI.
+Functionality / Flow:
+ - `POST /admin/generate-embeddings/policy` runs `create_embedding.py` as a subprocess.
+ - `POST /admin/generate-embeddings/feedback` runs `feedback_embedding.py`.
+ - `GET`/`POST` `/admin/settings` read and write `admin_settings.json` (example setting: `hide_low_confidence`).
+Inputs: None for embedding triggers; JSON for settings.
+Outputs: JSON with success/failure and optional process output.
+Dependencies: Subprocess invocation, file I/O.
+Related Files: `flask_app.py`, `create_embedding.py`, `feedback_embedding.py`, `admin_settings.json`
+Edge cases:
+ - Subprocesses are run with timeouts; non‑zero exit codes return 500 with stderr.
+
+-----------------------------------------------------------------
+
+Feature: Frontend — Chat UI, Login, Signup, Admin Panel
+Description: Static HTML/CSS/JS UI providing:
+ - Login (`public/login.html`) and Signup (`public/signup.html`) flows that call `/login` and `/signup`.
+ - Chat interface (`public/ChatUI.html`) with message list, confidence bar, feedback buttons, language selector, suggestions/hints area and low confidence handling.
+ - Admin panel (`public/admin.html`) with metrics cards, KB editing UI, FAQ management and user administration views.
+Purpose: Provide user-friendly, accessible interfaces for students and admins without a heavy frontend framework.
+Functionality / Flow:
+ - Login form submits credentials and handles redirect by `redirect_url` returned from server.
+ - Chat UI sends `POST /chat` with `message` and `language` and renders the response, confidence, suggestions and feedback options.
+Inputs: User interactions (form fields, buttons).
+Outputs: AJAX requests to backend endpoints, dynamic DOM updates.
+Dependencies: Browser fetch API, cookie support for JWT.
+Related Files: `public/ChatUI.html`, `public/login.html`, `public/signup.html`, `public/admin.html`
+Edge cases:
+ - Client expects cookie `access_token`; third‑party cookie restrictions or CORS misconfiguration may break flow.
+
+-----------------------------------------------------------------
+
+Feature: Configuration & Secrets
+Description: Secrets/API keys are stored in `.env` (example `SARVAMAI_API_KEY`) used by `translate.py`.
+Purpose: Keep sensitive credentials out of source code and allow environment-specific configuration.
+Related Files: `.env`, `translate.py`, `flask_app.py` (some config constants)
+Edge cases:
+ - Missing or invalid API keys lead to translation endpoints returning `success: False` and preserving original text.
+
+-----------------------------------------------------------------
+
+Feature: Data & Storage
+Description: Project persists small data artifacts locally:
+ - `users.db` (SQLite) — users and admin responses
+ - `feedback.csv` — user feedback rows
+ - `low_confidence_questions.csv` — low confidence logs
+ - `faiss_index/`, `faiss_feedback_index/` — FAISS binary indexes
+ - `models/` and `hf_cache/` — cached model files
+Purpose: Keep the project self-contained and easy to run in development.
+Related Files: `db.py`, `feedback.csv`, `response.db` (created), `faiss_index/`, `faiss_feedback_index/`, `models/`, `hf_cache/`
+
+-----------------------------------------------------------------
+
+Notes on Security, Validation and Extensibility
+- Passwords are hashed with Werkzeug before storage but there is no multi-factor authentication or account lockout.
+- JWT secret is set in `flask_app.py` as `swastik` — it should be moved to an environment variable for production use.
+- File writes and subprocess executions are guarded with try/except in most routes; admin endpoints require admin role.
+- The FAISS indexes are binary blobs — include them in backups when migrating or deploying.
+
+=================================================================
+End of Features Catalogue
+=================================================================
