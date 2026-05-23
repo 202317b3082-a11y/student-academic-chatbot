@@ -7,3 +7,6 @@ faiss_feedback_index/
 .env
 
 models/
+*.safetensors
+
+__pycache__/
