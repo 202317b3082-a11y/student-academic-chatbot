@@ -11,7 +11,7 @@ import os
 import json
 import re
 from datetime import datetime, timedelta
-LOW_CONF_CSV = os.path.join(os.path.dirname(__file__), 'low_confidence.csv')
+LOW_CONF_CSV = os.path.join(os.path.dirname(__file__), 'low_confidence_questions.csv')
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), 'admin_settings.json')
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -321,26 +321,28 @@ def chat_api():
             conf = 0
 
         # Step 3: Fallback if confidence < 70
-        csv_file = "low_confidence_questions.csv"
-        file_exists = os.path.isfile(csv_file)
-        with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            if not file_exists:
-                writer.writerow(["user", "question", "confidence"])
-            writer.writerow([request.user["email"], message, conf])
-        
-        hide_low_confidence = get_settings().get("hide_low_confidence", False)
-        
-        if conf < 70 and not hide_low_confidence:
-            return jsonify({
-                "response": ["Confidence is low, please try again with different phrasing."],
-                "confidence": conf,
-                "confidence_score": conf,
-                "hint": "",
-                "user": request.user["email"],
-                "user_language": user_language,
-                "detected_language": detected_language
-            }), 200
+        # Only record low-confidence queries
+        if conf < 70:
+            csv_file = LOW_CONF_CSV
+            file_exists = os.path.isfile(csv_file)
+            with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                if not file_exists:
+                    writer.writerow(["user", "question", "confidence"])
+                writer.writerow([request.user["email"], message, conf])
+
+            hide_low_confidence = get_settings().get("hide_low_confidence", False)
+
+            if not hide_low_confidence:
+                return jsonify({
+                    "response": ["Confidence is low, please try again with different phrasing."],
+                    "confidence": conf,
+                    "confidence_score": conf,
+                    "hint": "",
+                    "user": request.user["email"],
+                    "user_language": user_language,
+                    "detected_language": detected_language
+                }), 200
 
         # Step 4: Translate response back if needed
         if user_language.lower() != "english":
@@ -620,7 +622,7 @@ def admin_feedback_report():
 @jwt_required
 @admin_required
 def low_confidence_questions():
-    csv_path = os.path.join(os.path.dirname(__file__), 'low_confidence_questions.csv')
+    csv_path = LOW_CONF_CSV
     if not os.path.exists(csv_path):
         return jsonify({'questions': []}), 200
     questions = []
