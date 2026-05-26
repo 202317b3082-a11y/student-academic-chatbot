@@ -9,6 +9,7 @@ import db
 import csv
 import os
 import json
+import re
 from datetime import datetime, timedelta
 LOW_CONF_CSV = os.path.join(os.path.dirname(__file__), 'low_confidence.csv')
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), 'admin_settings.json')
@@ -20,6 +21,44 @@ from flask_cors import CORS
 from suggestion import hint
 from evaluation import evaluate, metrics
 import subprocess
+
+# --------------------------------------------------
+# Validation Functions
+# --------------------------------------------------
+
+def validate_email(email: str) -> bool:
+    """Validate email format."""
+    pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    return re.match(pattern, email) is not None
+
+
+def validate_password(password: str) -> tuple:
+    """Validate password strength. Returns (is_valid, error_message)"""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long."
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter."
+    if not re.search(r'[a-z]', password):
+        return False, "Password must contain at least one lowercase letter."
+    if not re.search(r'[0-9]', password):
+        return False, "Password must contain at least one number."
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        return False, "Password must contain at least one special character (!@#$%^&*)."
+    return True, ""
+
+
+def validate_mobile(mobile: str) -> tuple:
+    """Validate mobile number. Returns (is_valid, error_message)"""
+    if not mobile:
+        return True, ""  # Mobile is optional
+    mobile_clean = mobile.replace(" ", "").replace("-", "")
+    if not mobile_clean.isdigit():
+        return False, "Mobile number must contain only digits."
+    if len(mobile_clean) < 10:
+        return False, "Mobile number must be at least 10 digits long."
+    if len(mobile_clean) > 15:
+        return False, "Mobile number must not exceed 15 digits."
+    return True, ""
 
 def get_settings():
     if not os.path.exists(SETTINGS_FILE):
@@ -378,12 +417,30 @@ def signup():
     if not all(data.get(k) for k in ("name", "email", "mobile", "password")):
         return jsonify({"message": "All fields are required"}), 400
 
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip()
+    mobile = data.get("mobile", "").strip()
+
+    # Validate email format
+    if not validate_email(email):
+        return jsonify({"message": "Invalid email format. Please enter a valid email address."}), 400
+
+    # Validate password strength
+    is_valid, error_msg = validate_password(password)
+    if not is_valid:
+        return jsonify({"message": error_msg}), 400
+
+    # Validate mobile number
+    is_valid, error_msg = validate_mobile(mobile)
+    if not is_valid:
+        return jsonify({"message": error_msg}), 400
+
     try:
         db.create_user(
             data["name"],
-            data["email"],
-            data["mobile"],
-            generate_password_hash(data["password"]),
+            email,
+            mobile,
+            generate_password_hash(password),
             "student"
         )
         return jsonify({"message": "Signup successful"}), 201
@@ -397,9 +454,16 @@ def signup():
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    user = db.get_user_by_email(data.get("email"))
+    email = data.get("email", "").strip()
+    password = data.get("password", "").strip()
 
-    if not user or not check_password_hash(user["password"], data.get("password")):
+    # Validate email format
+    if not validate_email(email):
+        return jsonify({"message": "Invalid email format."}), 400
+
+    user = db.get_user_by_email(email)
+
+    if not user or not check_password_hash(user["password"], password):
         return jsonify({"message": "Invalid email or password"}), 401
 
     token = generate_jwt(user)

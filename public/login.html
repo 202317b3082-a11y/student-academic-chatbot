@@ -188,6 +188,7 @@
       <div class="form-group">
         <label for="email">Email Address</label>
         <input type="email" id="email" placeholder="name@email.com" required>
+        <small id="emailError" style="color: #ff6b6b; font-size: 12px; display: none; margin-top: 4px;"></small>
       </div>
 
       <div class="form-group">
@@ -204,14 +205,46 @@
   </div>
 
   <script>
+    const validateEmail = (email) => {
+      const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return pattern.test(email);
+    };
+
     const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const emailError = document.getElementById('emailError');
+
+    emailInput.addEventListener('blur', () => {
+      const email = emailInput.value.trim();
+      if (email && !validateEmail(email)) {
+        emailError.textContent = 'Invalid email format.';
+        emailError.style.display = 'block';
+      } else {
+        emailError.style.display = 'none';
+      }
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const email = emailInput.value.trim();
+      const password = document.getElementById('password').value;
+
+      // Validate email format
+      if (!validateEmail(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      if (!password) {
+        alert('Password is required.');
+        return;
+      }
+
       const res = await fetch('/login', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         credentials: 'include',
-        body: JSON.stringify({email: document.getElementById('email').value, password: document.getElementById('password').value})
+        body: JSON.stringify({email: email, password: password})
       });
       const data = await res.json();
       if (res.ok) {

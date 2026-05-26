@@ -193,16 +193,25 @@
       <div class="form-group">
         <label for="signupEmail">Email Address</label>
         <input type="email" id="signupEmail" placeholder="name@email.com" required>
+        <small id="emailError" style="color: #ff6b6b; font-size: 12px; display: none; margin-top: 4px;"></small>
       </div>
 
       <div class="form-group">
         <label for="signupMobile">Mobile Number</label>
-        <input type="text" id="signupMobile" placeholder="1234567890" required>
+        <input type="text" id="signupMobile" placeholder="1234567890" inputmode="numeric" maxlength="15" required>
+        <small id="mobileError" style="color: #ff6b6b; font-size: 12px; display: none; margin-top: 4px;"></small>
+        <small id="mobileHint" style="color: #94a3b8; font-size: 11px; margin-top: 6px; display: block;">
+          10-15 digits required
+        </small>
       </div>
 
       <div class="form-group">
         <label for="signupPassword">Password</label>
         <input type="password" id="signupPassword" placeholder="••••••••" required>
+        <small id="passwordError" style="color: #ff6b6b; font-size: 12px; display: none; margin-top: 4px;"></small>
+        <small id="passwordHint" style="color: #94a3b8; font-size: 11px; margin-top: 6px; display: block; line-height: 1.4;">
+          Password must be at least 8 characters with: uppercase, lowercase, number, and special character (!@#$%^&*)
+        </small>
       </div>
 
       <button id="signupButton">Sign Up</button>
@@ -214,13 +223,117 @@
   </div>
 
   <script>
+    const validateEmail = (email) => {
+      const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return pattern.test(email);
+    };
+
+    const validatePassword = (password) => {
+      const checks = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+      };
+      return checks;
+    };
+
+    const getPasswordErrorMessage = (password) => {
+      const checks = validatePassword(password);
+      if (!checks.length) return "Password must be at least 8 characters long.";
+      if (!checks.uppercase) return "Password must contain at least one uppercase letter.";
+      if (!checks.lowercase) return "Password must contain at least one lowercase letter.";
+      if (!checks.number) return "Password must contain at least one number.";
+      if (!checks.special) return "Password must contain at least one special character (!@#$%^&*).";
+      return "";
+    };
+
+    const validateMobile = (mobile) => {
+      if (!mobile) return true;
+      const mobileClean = mobile.replace(/[\s-]/g, '');
+      if (!/^\d+$/.test(mobileClean)) return false;
+      if (mobileClean.length < 10) return false;
+      if (mobileClean.length > 15) return false;
+      return true;
+    };
+
+    const getMobileErrorMessage = (mobile) => {
+      if (!mobile) return "";
+      const mobileClean = mobile.replace(/[\s-]/g, '');
+      if (!/^\d+$/.test(mobileClean)) return "Mobile number must contain only digits.";
+      if (mobileClean.length < 10) return "Mobile number must be at least 10 digits long.";
+      if (mobileClean.length > 15) return "Mobile number must not exceed 15 digits.";
+      return "";
+    };
+
+    const emailInput = document.getElementById('signupEmail');
+    const passwordInput = document.getElementById('signupPassword');
+    const mobileInput = document.getElementById('signupMobile');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const mobileError = document.getElementById('mobileError');
+
+    emailInput.addEventListener('blur', () => {
+      const email = emailInput.value.trim();
+      if (email && !validateEmail(email)) {
+        emailError.textContent = 'Invalid email format.';
+        emailError.style.display = 'block';
+      } else {
+        emailError.style.display = 'none';
+      }
+    });
+
+    mobileInput.addEventListener('blur', () => {
+      const mobile = mobileInput.value.trim();
+      if (mobile && !validateMobile(mobile)) {
+        const errorMsg = getMobileErrorMessage(mobile);
+        mobileError.textContent = errorMsg;
+        mobileError.style.display = 'block';
+      } else {
+        mobileError.style.display = 'none';
+      }
+    });
+
+    passwordInput.addEventListener('blur', () => {
+      const password = passwordInput.value;
+      if (password) {
+        const errorMsg = getPasswordErrorMessage(password);
+        if (errorMsg) {
+          passwordError.textContent = errorMsg;
+          passwordError.style.display = 'block';
+        } else {
+          passwordError.style.display = 'none';
+        }
+      }
+    });
+
     document.getElementById('signupButton').addEventListener('click', async (e) => {
-      const name = document.getElementById("signupName").value;
-      const email = document.getElementById("signupEmail").value;
-      const mobile = document.getElementById("signupMobile").value;
+      const name = document.getElementById("signupName").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const mobile = document.getElementById("signupMobile").value.trim();
       const password = document.getElementById("signupPassword").value;
 
+      // Validation
       if (!name || !email || !mobile || !password) {
+        alert('All fields are required.');
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      if (!validateMobile(mobile)) {
+        const errorMsg = getMobileErrorMessage(mobile);
+        alert(errorMsg);
+        return;
+      }
+
+      const passwordError = getPasswordErrorMessage(password);
+      if (passwordError) {
+        alert(passwordError);
         return;
       }
 
