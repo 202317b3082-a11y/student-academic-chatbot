@@ -173,6 +173,18 @@
       color: var(--accent-strong);
       text-decoration: underline;
     }
+
+    body.light-theme {
+      --background: #f8fafc;
+      --panel: #ffffff;
+      --surface: #f8fafc;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --border: rgba(148, 163, 184, 0.35);
+      --shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+    }
   </style>
 </head>
 <body>
@@ -198,7 +210,12 @@
 
       <div class="form-group">
         <label for="signupMobile">Mobile Number</label>
-        <input type="text" id="signupMobile" placeholder="1234567890" inputmode="numeric" maxlength="15" required>
+<input type="tel" id="signupMobile"
+       placeholder="1234567890"
+       inputmode="numeric"
+       maxlength="15"
+       pattern="[0-9]{10,15}"
+       required>
         <small id="mobileError" style="color: #ff6b6b; font-size: 12px; display: none; margin-top: 4px;"></small>
         <small id="mobileHint" style="color: #94a3b8; font-size: 11px; margin-top: 6px; display: block;">
           10-15 digits required
