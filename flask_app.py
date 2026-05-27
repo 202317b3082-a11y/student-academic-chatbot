@@ -506,6 +506,79 @@ def logout():
     return response, 200
 
 # --------------------------------------------------
+# Password Reset
+# --------------------------------------------------
+
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    """Request password reset - verify email exists"""
+    data = request.get_json()
+    email = data.get("email", "").strip()
+
+    # Validate email format
+    if not validate_email(email):
+        return jsonify({"message": "Invalid email format."}), 400
+
+    user = db.get_user_by_email(email)
+
+    if not user:
+        # Return generic message for security (don't reveal if email exists)
+        return jsonify({"message": "If email exists, you will receive reset instructions"}), 200
+
+    # Return success - in production, you would send email with reset link
+    return jsonify({
+        "message": "Password reset email sent",
+        "email": email,
+        "note": "Check your email for password reset instructions"
+    }), 200
+
+
+@app.route("/reset-password", methods=["POST"])
+def reset_password():
+    """Reset password with email verification"""
+    data = request.get_json()
+    email = data.get("email", "").strip()
+    new_password = data.get("new_password", "").strip()
+    confirm_password = data.get("confirm_password", "").strip()
+
+    # Validate inputs
+    if not validate_email(email):
+        return jsonify({"message": "Invalid email format."}), 400
+
+    if not new_password or not confirm_password:
+        return jsonify({"message": "Password fields cannot be empty."}), 400
+
+    if new_password != confirm_password:
+        return jsonify({"message": "Passwords do not match."}), 400
+
+    # Validate password strength
+    is_valid, error_msg = validate_password(new_password)
+    if not is_valid:
+        return jsonify({"message": error_msg}), 400
+
+    # Check if user exists
+    user = db.get_user_by_email(email)
+    if not user:
+        return jsonify({"message": "User not found."}), 404
+
+    # Update password using db module
+    try:
+        conn = sqlite3.connect(db.DB_NAME)
+        cursor = conn.cursor()
+        hashed_password = generate_password_hash(new_password)
+        cursor.execute(
+            "UPDATE users SET password = ? WHERE email = ?",
+            (hashed_password, email)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        return jsonify({"message": f"Error updating password: {str(e)}"}), 500
+
+    return jsonify({"message": "Password reset successfully. Please log in with your new password."}), 200
+
+
+# --------------------------------------------------
 # KB management endpoints
 # --------------------------------------------------
 
