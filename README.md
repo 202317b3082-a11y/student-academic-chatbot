@@ -19,6 +19,7 @@ StudentAcademicChatbot/
 │   ├── ChatUI.html                 # Chat interface for students
 │   ├── admin.html                  # Admin dashboard UI
 │   ├── login.html                  # Login page
+|   ├──forgot-password.html         # forgot-password page
 │   └── signup.html                 # Sign‑up page
 ├── flask_app.py                    # Flask app, routes, JWT authentication
 ├── logic_response.py               # Core query processing & FAISS search
