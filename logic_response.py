@@ -7,8 +7,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 FAISS_DIR = "faiss_index"
 POLICY_FILE = "college_policy.txt"
 
-MODEL_NAME = "google/flan-t5-small"  # fast model
-MODEL_DIR = "models/flan-t5-small"
+MODEL_NAME = "google/flan-t5-base"  # fast model
+MODEL_DIR = "models/flan-t5-base"
 
 # ================= MODEL SETUP =================
 def setup_model():
